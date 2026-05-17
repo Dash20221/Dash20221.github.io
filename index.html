@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="es">
 <head>
 <meta charset="UTF-8">
@@ -105,6 +106,8 @@ label{font-size:12px;color:var(--text2);display:flex;align-items:center;gap:5px;
 .card.not-obtained{opacity:.7;}
 @keyframes shimmer{from{box-shadow:0 0 8px rgba(255,215,0,.3);}to{box-shadow:0 0 22px rgba(255,215,0,.7),0 0 35px rgba(255,200,0,.3);}}
 .card img{width:100%;aspect-ratio:1;object-fit:cover;display:block;background:var(--bg3);}
+.card.poster-card img{aspect-ratio:2/3;}
+.card.poster-card{width:130px;}
 .card img.gray{filter:grayscale(100%) brightness(.55);}
 .card .card-body{padding:8px;}
 .card .card-name{font-size:12px;font-weight:600;margin-bottom:4px;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
@@ -992,6 +995,10 @@ body.pro .filter-chip, body.pro .card-list-item { transition-timing-function: cu
         <label>URL Imagen</label>
         <input type="url" id="fAnimeImg" placeholder="https://...">
       </div>
+      <div class="form-group" style="margin-bottom:8px;">
+        <label>Tag de serie</label>
+        <input type="text" id="fAnimeTag" placeholder="Ej: azurlane" maxlength="40" style="font-family:monospace;">
+      </div>
       <div style="margin-top:8px;">
         <img id="fAnimePreview" src="" style="width:80px;height:80px;object-fit:cover;border-radius:8px;display:none;border:1px solid var(--border);">
       </div>
@@ -1219,11 +1226,13 @@ function openAnimeForm(idx) {
     const a = animes[editingAnime];
     document.getElementById('fAnimeName').value = a.name;
     document.getElementById('fAnimeImg').value = a.img || '';
+    document.getElementById('fAnimeTag').value = a.tag || '';
     document.getElementById('animeFormTitle').textContent = '✏️ Editar Anime';
     showPreview('fAnimeImg', 'fAnimePreview');
   } else {
     document.getElementById('fAnimeName').value = '';
     document.getElementById('fAnimeImg').value = '';
+    document.getElementById('fAnimeTag').value = '';
     document.getElementById('fAnimePreview').style.display = 'none';
     document.getElementById('animeFormTitle').textContent = '➕ Nuevo Anime';
   }
@@ -1234,13 +1243,15 @@ function closeAnimeForm() { document.getElementById('animeFormModal').style.disp
 function saveAnime() {
   const name = document.getElementById('fAnimeName').value.trim();
   const img = document.getElementById('fAnimeImg').value.trim();
+  const tag = document.getElementById('fAnimeTag').value.trim();
   if (!name) { toast('⚠️ Escribe un nombre', '#e53935'); return; }
   if (editingAnime !== null) {
     animes[editingAnime].name = name;
     animes[editingAnime].img = img;
+    animes[editingAnime].tag = tag;
     toast('✅ Anime editado');
   } else {
-    animes.push({ name, img, cards: [], createdAt: Date.now() });
+    animes.push({ name, img, tag, cards: [], createdAt: Date.now() });
     toast('✅ Anime agregado');
   }
   save(); closeAnimeForm(); renderAnimes(); updateHeroStats();
@@ -1287,6 +1298,7 @@ function renderAnimes() {
         <div class="pbar"><div class="pfill" style="width:${pct}%"></div></div>
         <div class="ac-actions">
           <button class="btn btn-sm btn-icon" onclick="event.stopPropagation();openAnimeForm(${i})">✏️</button>
+          ${a.tag ? `<button class="btn btn-sm btn-icon" title="Copiar tag: ${a.tag}" onclick="event.stopPropagation();copyTag('${a.tag}',this)">📋</button>` : ''}
           <button class="btn btn-sm btn-icon btn-danger" onclick="event.stopPropagation();deleteAnime(${i})">🗑</button>
         </div>
       </div>`;
@@ -1544,7 +1556,7 @@ function renderCards() {
 function makeCardEl(c) {
   const i = c._i;
   const div = document.createElement('div');
-  div.className = 'card' + (c.shiny?' shiny':'') + (c.obtained?'':' not-obtained');
+  div.className = 'card' + (c.type==='poster'?' poster-card':'') + (c.shiny?' shiny':'') + (c.obtained?'':' not-obtained');
   div.draggable = true;
   div.dataset.index = i;
   div.innerHTML = `
@@ -1604,8 +1616,9 @@ function makeListItem(c) {
 function openCardModal(i) {
   const c = animes[currentAnime].cards[i];
   document.getElementById('cmImg').src = c.img || '';
-  document.getElementById('cmImg').className = 'modal-img' + (c.obtained?'':' gray' );
+  document.getElementById('cmImg').className = 'modal-img' + (c.obtained?'':' gray');
   document.getElementById('cmImg').style.filter = c.obtained ? '' : 'grayscale(100%) brightness(.5)';
+  document.getElementById('cmImg').style.aspectRatio = c.type === 'poster' ? '2/3' : '1';
   document.getElementById('cmName').textContent = c.name + (c.shiny ? ' ✨' : '');
   document.getElementById('cmMeta').innerHTML = `
     <span class="rbd ${c.rarity}">${RARITY_LABELS[c.rarity]}</span>
@@ -1914,14 +1927,29 @@ function copyCode(code, btn) {
     btn.textContent = '✅';
     btn.style.color = 'var(--green)';
     setTimeout(() => { btn.textContent = orig; btn.style.color = ''; }, 1200);
-    toast(`📋 Copiado: ${code}`, 'var(--cyan)', 2000);
+    toast(`📋 Copiado: fv ${code}`, 'var(--cyan)', 2000);
   }).catch(() => {
-    // fallback
     const ta = document.createElement('textarea');
     ta.value = `fv ${code}`; ta.style.position = 'fixed'; ta.style.opacity = '0';
     document.body.appendChild(ta); ta.select();
     document.execCommand('copy'); document.body.removeChild(ta);
-    toast(`📋 Copiado: ${code}`, 'var(--cyan)', 2000);
+    toast(`📋 Copiado: fv ${code}`, 'var(--cyan)', 2000);
+  });
+}
+function copyTag(tag, btn) {
+  if (!tag) return;
+  navigator.clipboard.writeText(`ft ${tag}`).then(() => {
+    const orig = btn.textContent;
+    btn.textContent = '✅';
+    btn.style.color = 'var(--green)';
+    setTimeout(() => { btn.textContent = orig; btn.style.color = ''; }, 1200);
+    toast(`📋 Copiado: ft ${tag}`, 'var(--cyan)', 2000);
+  }).catch(() => {
+    const ta = document.createElement('textarea');
+    ta.value = `ft ${tag}`; ta.style.position = 'fixed'; ta.style.opacity = '0';
+    document.body.appendChild(ta); ta.select();
+    document.execCommand('copy'); document.body.removeChild(ta);
+    toast(`📋 Copiado: ft ${tag}`, 'var(--cyan)', 2000);
   });
 }
 
@@ -2018,3 +2046,4 @@ init();
 </script>
 </body>
 </html>
+
