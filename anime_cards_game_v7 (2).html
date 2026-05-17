@@ -1,0 +1,2047 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🎴 Anime Cards Game v7</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --bg:#0a0a0f;--bg2:#111118;--bg3:#1a1a24;--bg4:#22222e;
+  --border:#2e2e3e;--border2:#3a3a50;
+  --text:#e8e8f0;--text2:#9090a8;--text3:#5a5a70;
+  --cyan:#00e5ff;--gold:#ffd700;--green:#00c36a;--red:#e53935;--purple:#c340ff;
+  --radius:12px;--radius-sm:8px;
+}
+body{font-family:'Segoe UI',Arial,sans-serif;background:var(--bg);color:var(--text);padding:0;min-height:100vh;overflow-x:hidden;}
+
+/* ---- LAYOUT ---- */
+#app{max-width:1100px;margin:0 auto;padding:12px;}
+.page{display:none;}
+.page.active{display:block;}
+
+/* ---- TOPBAR ---- */
+.topbar{display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--bg2);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:100;flex-wrap:wrap;}
+.topbar h1{font-size:1.2rem;color:var(--cyan);flex:1;white-space:nowrap;}
+.topbar-btns{display:flex;gap:6px;flex-wrap:wrap;}
+
+/* ---- BUTTONS ---- */
+.btn{cursor:pointer;background:var(--bg3);color:var(--text);border:1px solid var(--border2);border-radius:var(--radius-sm);padding:6px 12px;font-size:12px;transition:all .15s;white-space:nowrap;}
+.btn:hover{background:var(--bg4);border-color:#555;}
+.btn-primary{background:#003a4a;border-color:var(--cyan);color:var(--cyan);}
+.btn-primary:hover{background:#005060;}
+.btn-danger{background:#3a0a0a;border-color:var(--red);color:var(--red);}
+.btn-danger:hover{background:#4a1010;}
+.btn-success{background:#003a20;border-color:var(--green);color:var(--green);}
+.btn-success:hover{background:#004a28;}
+.btn-sm{padding:3px 8px;font-size:11px;}
+.btn-icon{padding:4px 8px;font-size:13px;}
+
+/* ---- INPUTS ---- */
+input[type=text],input[type=number],input[type=url],input[type=search],select,textarea{
+  background:var(--bg3);color:var(--text);border:1px solid var(--border2);border-radius:var(--radius-sm);
+  padding:6px 10px;font-size:13px;outline:none;transition:border .15s;
+}
+input:focus,select:focus,textarea:focus{border-color:var(--cyan);}
+input[type=checkbox]{accent-color:var(--cyan);width:14px;height:14px;cursor:pointer;}
+input[type=file]{color:var(--text2);font-size:12px;}
+label{font-size:12px;color:var(--text2);display:flex;align-items:center;gap:5px;cursor:pointer;}
+
+/* ---- GLOBAL STATS HERO ---- */
+.hero-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px;margin:10px 0;}
+.hero-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:10px 12px;text-align:center;}
+.hero-card .num{font-size:1.6rem;font-weight:700;line-height:1;}
+.hero-card .lbl{font-size:11px;color:var(--text2);margin-top:3px;}
+.hero-card.c-cyan .num{color:var(--cyan);}
+.hero-card.c-gold .num{color:var(--gold);}
+.hero-card.c-green .num{color:var(--green);}
+.hero-card.c-purple .num{color:var(--purple);}
+
+/* ---- PROGRESS BARS ---- */
+.pbar{height:8px;background:var(--bg4);border-radius:6px;overflow:hidden;margin-top:4px;}
+.pfill{height:100%;border-radius:6px;background:var(--cyan);transition:width .5s cubic-bezier(.4,0,.2,1);}
+.pfill.gold{background:var(--gold);}
+.pfill.green{background:var(--green);}
+
+/* ---- ANIME GRID ---- */
+.anime-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px;margin-top:8px;}
+.anime-card{background:var(--bg2);border:1.5px solid var(--border);border-radius:var(--radius);overflow:hidden;cursor:pointer;transition:transform .2s,border-color .2s;position:relative;}
+.anime-card:hover{transform:translateY(-3px);border-color:var(--border2);}
+.anime-card img{width:100%;aspect-ratio:1;object-fit:cover;display:block;background:var(--bg3);}
+.anime-card .ac-body{padding:8px;}
+.anime-card .ac-name{font-size:13px;font-weight:600;margin-bottom:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.anime-card .ac-prog{font-size:11px;color:var(--text2);margin-bottom:3px;}
+.anime-card .ac-actions{display:flex;gap:4px;margin-top:6px;justify-content:center;}
+.anime-card.completed{border-color:var(--green);}
+.anime-card.completed::after{content:"✓";position:absolute;top:6px;right:6px;background:var(--green);color:#fff;font-size:10px;font-weight:bold;border-radius:50%;width:18px;height:18px;display:flex;align-items:center;justify-content:center;}
+
+/* ---- TABS ---- */
+.tabs{display:flex;gap:4px;border-bottom:1px solid var(--border);margin-bottom:12px;overflow-x:auto;scrollbar-width:none;}
+.tabs::-webkit-scrollbar{display:none;}
+.tab{background:none;border:none;color:var(--text3);font-size:13px;padding:8px 14px;cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap;transition:color .15s;}
+.tab.active{color:var(--cyan);border-bottom-color:var(--cyan);}
+.tab:hover{color:var(--text);}
+
+/* ---- TOOLBAR ---- */
+.toolbar{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-bottom:10px;padding:8px;background:var(--bg2);border-radius:var(--radius-sm);border:1px solid var(--border);}
+.filter-chip{background:var(--bg3);border:1px solid var(--border2);border-radius:20px;padding:3px 10px;font-size:11px;cursor:pointer;transition:all .15s;color:var(--text2);}
+.filter-chip.on{background:var(--bg3);border-color:var(--cyan);color:var(--cyan);}
+.filter-chip.on.gold{border-color:var(--gold);color:var(--gold);}
+
+/* ---- SECTION ---- */
+.section-head{display:flex;align-items:center;gap:8px;padding:6px 0;cursor:pointer;user-select:none;border-bottom:1px solid var(--border);margin-bottom:8px;}
+.section-head .sh-title{font-size:14px;font-weight:600;}
+.section-head .sh-count{font-size:11px;color:var(--text2);margin-left:4px;}
+.section-head .sh-pct{font-size:11px;color:var(--text3);}
+.section-head .sh-arrow{margin-left:auto;font-size:11px;color:var(--text3);transition:transform .2s;}
+.section-head.collapsed .sh-arrow{transform:rotate(-90deg);}
+.section-body{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:16px;}
+.section-body.hidden{display:none;}
+
+/* ---- CARD ---- */
+.card{width:175px;background:var(--bg2);border:1.5px solid var(--border);border-radius:var(--radius);overflow:hidden;transition:transform .2s;position:relative;cursor:default;}
+.card:hover{transform:translateY(-2px);}
+.card.shiny{border-color:#ffd700;box-shadow:0 0 14px rgba(255,215,0,.35);animation:shimmer 2.5s ease-in-out infinite alternate;}
+.card.not-obtained{opacity:.7;}
+@keyframes shimmer{from{box-shadow:0 0 8px rgba(255,215,0,.3);}to{box-shadow:0 0 22px rgba(255,215,0,.7),0 0 35px rgba(255,200,0,.3);}}
+.card img{width:100%;aspect-ratio:1;object-fit:cover;display:block;background:var(--bg3);}
+.card.poster-card img{aspect-ratio:2/3;}
+.card.poster-card{width:130px;}
+.card img.gray{filter:grayscale(100%) brightness(.55);}
+.card .card-body{padding:8px;}
+.card .card-name{font-size:12px;font-weight:600;margin-bottom:4px;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.card .card-tags{display:flex;align-items:center;justify-content:center;gap:4px;margin-bottom:5px;flex-wrap:wrap;}
+.card .pwr{font-size:11px;color:var(--text2);text-align:center;margin-bottom:3px;}
+.card .card-actions{display:flex;gap:3px;justify-content:center;flex-wrap:wrap;margin-top:5px;}
+.card .card-move{width:100%;font-size:11px;margin-top:4px;background:var(--bg3);color:var(--text2);}
+.card .obtained-badge{position:absolute;top:5px;right:5px;background:var(--green);color:#fff;font-size:9px;font-weight:700;border-radius:4px;padding:1px 5px;}
+.card .new-badge{position:absolute;top:5px;left:5px;background:var(--cyan);color:#000;font-size:9px;font-weight:700;border-radius:4px;padding:1px 5px;}
+.card.dragging{opacity:.35;border-style:dashed;}
+
+/* ---- RARITY BADGES ---- */
+.rbd{display:inline-block;font-size:9px;font-weight:700;padding:1px 6px;border-radius:10px;}
+.rbd.bronze{background:#3a1f05;color:#cd7f32;}
+.rbd.silver{background:#252525;color:#c0c0c0;}
+.rbd.gold{background:#2e2000;color:#ffd700;}
+.rbd.diamond{background:#00203a;color:#00e5ff;}
+.rbd.mythic{background:#1f0030;color:#c340ff;box-shadow:0 0 5px rgba(195,64,255,.4);}
+.rbd.radiant{background:#150025;color:#ff88ff;animation:radglow 1.5s ease-in-out infinite alternate;}
+@keyframes radglow{from{box-shadow:0 0 4px rgba(255,136,255,.3);}to{box-shadow:0 0 10px rgba(255,136,255,.7);}}
+
+/* ---- RARITY DOT ---- */
+.rdot{width:10px;height:10px;border-radius:50%;display:inline-block;}
+.rdot.bronze{background:#cd7f32;}
+.rdot.silver{background:#c0c0c0;}
+.rdot.gold{background:#ffd700;}
+.rdot.diamond{background:#00e5ff;}
+.rdot.mythic{background:#c340ff;}
+.rdot.radiant{background:linear-gradient(135deg,#ff88ff,#00e5ff);}
+
+/* ---- STATS PAGE ---- */
+.stats-section{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:12px;margin-bottom:10px;}
+.stats-section h4{font-size:13px;color:var(--text2);margin-bottom:8px;}
+.stat-row{display:flex;align-items:center;gap:8px;margin-bottom:6px;font-size:12px;}
+.stat-row .sr-label{width:80px;color:var(--text2);}
+.stat-row .sr-bar{flex:1;}
+.stat-row .sr-val{min-width:60px;text-align:right;color:var(--text2);}
+.trophy-list{display:flex;flex-direction:column;gap:6px;}
+.trophy-item{display:flex;align-items:center;gap:8px;font-size:12px;}
+.trophy-icon{font-size:16px;}
+
+/* ---- FORM ---- */
+.form-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:8px;margin-bottom:8px;}
+.form-group{display:flex;flex-direction:column;gap:3px;}
+.form-group label{font-size:11px;color:var(--text2);}
+.form-group input,.form-group select{width:100%;}
+.form-actions{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;}
+
+/* ---- CARD DETAIL MODAL ---- */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:200;display:flex;align-items:center;justify-content:center;padding:12px;}
+.modal{background:var(--bg2);border:1px solid var(--border2);border-radius:16px;max-width:380px;width:100%;overflow:hidden;}
+.modal-img{width:100%;aspect-ratio:1;object-fit:cover;display:block;background:var(--bg3);}
+.modal-body{padding:14px;}
+.modal-name{font-size:1.2rem;font-weight:700;margin-bottom:6px;}
+.modal-meta{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px;align-items:center;}
+.modal-pbar{margin-bottom:10px;}
+.modal-actions{display:flex;gap:6px;flex-wrap:wrap;}
+
+/* ---- CONFIRM DIALOG ---- */
+.confirm-overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:300;display:flex;align-items:center;justify-content:center;}
+.confirm-box{background:var(--bg2);border:1px solid var(--border2);border-radius:14px;padding:20px 24px;text-align:center;max-width:300px;}
+.confirm-box p{margin-bottom:14px;font-size:14px;}
+.confirm-btns{display:flex;gap:8px;justify-content:center;}
+
+/* ---- TOAST ---- */
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(10px);background:#1a1a2e;border:1px solid var(--border2);color:var(--text);padding:10px 18px;border-radius:20px;font-size:13px;z-index:9999;opacity:0;transition:opacity .25s,transform .25s;pointer-events:none;white-space:normal;max-width:90vw;text-align:center;box-shadow:0 4px 20px rgba(0,0,0,.5);}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+
+/* ---- SEARCH ANIME ---- */
+.search-bar{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;align-items:center;}
+.search-bar input{flex:1;min-width:140px;}
+
+/* ---- BACK HEADER ---- */
+.back-header{display:flex;align-items:center;gap:10px;margin-bottom:10px;padding:8px 0;border-bottom:1px solid var(--border);}
+.back-header h2{font-size:1.1rem;flex:1;}
+.anime-header-img{width:38px;height:38px;border-radius:8px;object-fit:cover;background:var(--bg3);}
+
+/* ---- EMPTY STATE ---- */
+.empty{text-align:center;padding:30px;color:var(--text3);font-size:14px;}
+
+/* ---- RECENTLY ADDED ---- */
+.new-ring{border-color:var(--cyan) !important;box-shadow:0 0 10px rgba(0,229,255,.3);}
+
+/* ---- VIEW TOGGLE ---- */
+.view-toggle{display:flex;gap:4px;}
+.view-btn{background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:4px 8px;cursor:pointer;font-size:13px;color:var(--text2);}
+.view-btn.active{background:var(--bg4);color:var(--text);border-color:var(--border2);}
+
+/* ---- LIST VIEW ---- */
+.card-list-item{display:flex;align-items:center;gap:10px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:8px 10px;margin-bottom:5px;}
+.cli-img{width:42px;height:42px;border-radius:6px;object-fit:cover;background:var(--bg3);flex-shrink:0;}
+.cli-img.gray{filter:grayscale(100%) brightness(.5);}
+.cli-info{flex:1;min-width:0;}
+.cli-name{font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.cli-meta{font-size:11px;color:var(--text2);margin-top:2px;}
+.cli-actions{display:flex;gap:4px;flex-shrink:0;}
+
+/* ---- RESPONSIVE ---- */
+@media(max-width:600px){
+  .anime-grid{grid-template-columns:repeat(2,1fr);}
+  .card{width:calc(50vw - 22px);}
+  .hero-stats{grid-template-columns:repeat(2,1fr);}
+  .form-grid{grid-template-columns:1fr;}
+  .topbar h1{font-size:1rem;}
+}
+
+/* ====================================================
+   ✨ MODO MEJORADO — Visual overhaul
+   ==================================================== */
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Nunito:wght@400;600;700&family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap');
+
+body.improved {
+  --bg:#06060e;--bg2:#0d0d1f;--bg3:#131326;--bg4:#1a1a32;
+  --border:#2a2a4a;--border2:#3a3a60;
+  --text:#eeeeff;--text2:#9090cc;--text3:#5050a0;
+  --cyan:#7df9ff;--gold:#ffe566;--green:#39ff14;--red:#ff3c5e;--purple:#d946ef;
+  background: #06060e;
+  font-family: 'Nunito', sans-serif;
+}
+
+/* Stars background */
+body.improved::before {
+  content:'';
+  position:fixed;inset:0;
+  background-image:
+    radial-gradient(1px 1px at 10% 15%, rgba(125,249,255,0.5) 0%, transparent 0%),
+    radial-gradient(1px 1px at 30% 40%, rgba(255,229,102,0.4) 0%, transparent 0%),
+    radial-gradient(1.5px 1.5px at 55% 20%, rgba(125,249,255,0.6) 0%, transparent 0%),
+    radial-gradient(1px 1px at 75% 60%, rgba(217,70,239,0.5) 0%, transparent 0%),
+    radial-gradient(1px 1px at 90% 10%, rgba(125,249,255,0.4) 0%, transparent 0%),
+    radial-gradient(1px 1px at 20% 80%, rgba(255,229,102,0.3) 0%, transparent 0%),
+    radial-gradient(1.5px 1.5px at 65% 85%, rgba(125,249,255,0.5) 0%, transparent 0%),
+    radial-gradient(1px 1px at 45% 70%, rgba(217,70,239,0.4) 0%, transparent 0%),
+    radial-gradient(1px 1px at 85% 35%, rgba(255,229,102,0.5) 0%, transparent 0%);
+  pointer-events:none;
+  z-index:0;
+}
+
+body.improved .topbar {
+  background: linear-gradient(135deg, rgba(13,13,31,0.97), rgba(20,10,40,0.97));
+  border-bottom: 1px solid rgba(125,249,255,0.2);
+  backdrop-filter: blur(12px);
+  box-shadow: 0 2px 30px rgba(125,249,255,0.08);
+}
+body.improved .topbar h1 {
+  font-family: 'Cinzel', serif;
+  font-size: 1.3rem;
+  background: linear-gradient(135deg, #7df9ff, #d946ef);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  letter-spacing: 0.04em;
+}
+
+/* Improved hero cards */
+body.improved .hero-card {
+  background: linear-gradient(135deg, rgba(13,13,31,0.9), rgba(20,10,50,0.9));
+  border: 1px solid rgba(125,249,255,0.15);
+  box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+  backdrop-filter: blur(6px);
+}
+body.improved .hero-card.c-cyan .num { 
+  background: linear-gradient(135deg, #7df9ff, #00b4d8);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip:text;
+}
+body.improved .hero-card.c-gold .num {
+  background: linear-gradient(135deg, #ffe566, #f59e0b);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip:text;
+}
+
+/* Improved anime cards */
+body.improved .anime-card {
+  background: linear-gradient(160deg, rgba(15,15,35,0.95), rgba(10,10,25,0.95));
+  border: 1px solid rgba(125,249,255,0.1);
+  box-shadow: 0 4px 24px rgba(0,0,0,0.5);
+  transition: transform .25s, box-shadow .25s, border-color .25s;
+  overflow: visible;
+}
+body.improved .anime-card:hover {
+  transform: translateY(-6px) scale(1.02);
+  border-color: rgba(125,249,255,0.4);
+  box-shadow: 0 12px 40px rgba(125,249,255,0.15);
+}
+body.improved .anime-card img { border-radius: 10px 10px 0 0; }
+
+/* Improved card grid items */
+body.improved .card {
+  background: linear-gradient(160deg, rgba(15,15,40,0.98), rgba(8,8,20,0.98));
+  border: 1px solid rgba(125,249,255,0.1);
+  box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+  transition: transform .25s, box-shadow .25s;
+  border-radius: 14px;
+}
+body.improved .card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 14px 40px rgba(125,249,255,0.12);
+}
+body.improved .card.shiny {
+  border-color: rgba(255,229,102,0.6);
+  box-shadow: 0 0 20px rgba(255,215,0,.4), 0 0 60px rgba(255,215,0,.1);
+}
+body.improved .card-name {
+  font-family: 'Nunito', sans-serif;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+body.improved .card .pwr {
+  font-family: 'Cinzel', serif;
+  font-size: 10px;
+  color: var(--text2);
+  letter-spacing: 0.05em;
+}
+
+/* Improved buttons */
+body.improved .btn {
+  border-radius: 8px;
+  font-family: 'Nunito', sans-serif;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  transition: all .2s;
+}
+body.improved .btn-primary {
+  background: linear-gradient(135deg, rgba(0,60,80,0.9), rgba(0,40,60,0.9));
+  border-color: rgba(125,249,255,0.5);
+  box-shadow: 0 0 12px rgba(125,249,255,0.1);
+}
+body.improved .btn-primary:hover {
+  background: linear-gradient(135deg, rgba(0,80,110,0.9), rgba(0,60,90,0.9));
+  box-shadow: 0 0 20px rgba(125,249,255,0.25);
+}
+body.improved .btn-success {
+  background: linear-gradient(135deg, rgba(0,60,20,0.9), rgba(0,40,15,0.9));
+  border-color: rgba(57,255,20,0.5);
+  box-shadow: 0 0 10px rgba(57,255,20,0.08);
+}
+
+/* Improved section headers */
+body.improved .section-head {
+  border-bottom: 1px solid rgba(125,249,255,0.1);
+}
+body.improved .section-head .sh-title {
+  font-family: 'Cinzel', serif;
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  color: var(--cyan);
+}
+
+/* Improved tabs */
+body.improved .tabs { border-bottom-color: rgba(125,249,255,0.1); }
+body.improved .tab { font-family: 'Nunito', sans-serif; font-weight: 600; }
+body.improved .tab.active { color: var(--cyan); }
+
+/* Improved toolbar */
+body.improved .toolbar {
+  background: linear-gradient(135deg, rgba(13,13,31,0.9), rgba(10,8,26,0.9));
+  border-color: rgba(125,249,255,0.1);
+  backdrop-filter: blur(8px);
+}
+
+/* Improved stats section */
+body.improved .stats-section {
+  background: linear-gradient(160deg, rgba(13,13,31,0.95), rgba(10,8,25,0.95));
+  border: 1px solid rgba(125,249,255,0.1);
+  box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+  backdrop-filter: blur(6px);
+}
+
+/* Improved rarity badges glow */
+body.improved .rbd.mythic { box-shadow: 0 0 8px rgba(195,64,255,.5); }
+body.improved .rbd.diamond { box-shadow: 0 0 8px rgba(125,249,255,.4); }
+body.improved .rbd.radiant { box-shadow: 0 0 10px rgba(255,136,255,.5); }
+
+/* Card code badge in improved mode */
+body.improved .card-code-badge {
+  display: inline-block;
+  font-family: 'Courier New', monospace;
+  font-size: 9px;
+  color: rgba(125,249,255,0.7);
+  background: rgba(125,249,255,0.06);
+  border: 1px solid rgba(125,249,255,0.15);
+  border-radius: 4px;
+  padding: 1px 5px;
+  letter-spacing: 0.05em;
+}
+
+/* Modal improved */
+body.improved .modal {
+  background: linear-gradient(160deg, rgba(13,13,35,0.98), rgba(8,8,20,0.98));
+  border: 1px solid rgba(125,249,255,0.2);
+  box-shadow: 0 20px 80px rgba(0,0,0,0.8), 0 0 40px rgba(125,249,255,0.06);
+}
+
+/* Progress bars improved */
+body.improved .pfill {
+  background: linear-gradient(90deg, #7df9ff, #00b4d8);
+}
+
+/* Back header improved */
+body.improved .back-header { border-bottom-color: rgba(125,249,255,0.1); }
+body.improved .back-header h2 { font-family: 'Cinzel', serif; letter-spacing: 0.04em; }
+
+/* Input improved */
+body.improved input[type=text], body.improved input[type=number],
+body.improved input[type=url], body.improved input[type=search],
+body.improved select, body.improved textarea {
+  background: rgba(13,13,31,0.9);
+  border-color: rgba(125,249,255,0.15);
+}
+body.improved input:focus, body.improved select:focus, body.improved textarea:focus {
+  border-color: rgba(125,249,255,0.5);
+  box-shadow: 0 0 10px rgba(125,249,255,0.1);
+}
+
+/* Transition for smooth mode switch */
+body, body * { transition-property: background, border-color, box-shadow, color; transition-duration: 0.4s; }
+body.improved .topbar *, body.improved .card *, body.improved .btn { transition-duration: 0.15s; }
+
+/* ====================================================
+   🔥 MODO PRO — Full redesign
+   ==================================================== */
+body.pro {
+  --bg:#03030a;--bg2:#07071a;--bg3:#0d0d24;--bg4:#12122e;
+  --border:#1e1e42;--border2:#2e2e5a;
+  --text:#f0f0ff;--text2:#8888bb;--text3:#4444888;
+  --cyan:#00ffff;--gold:#ffcc00;--green:#00ff88;--red:#ff2255;--purple:#bf00ff;
+  --pro-accent:#7000ff;--pro-accent2:#ff007a;--pro-glow:rgba(112,0,255,0.4);
+  --radius:14px;--radius-sm:9px;
+  background: #03030a;
+  font-family: 'Space Grotesk', sans-serif;
+  overflow-x: hidden;
+}
+
+/* Animated background */
+body.pro::before {
+  content:'';
+  position:fixed;inset:0;
+  background:
+    radial-gradient(ellipse 60% 40% at 20% 10%, rgba(112,0,255,0.08) 0%, transparent 60%),
+    radial-gradient(ellipse 50% 30% at 80% 90%, rgba(255,0,122,0.06) 0%, transparent 60%),
+    radial-gradient(ellipse 40% 40% at 60% 40%, rgba(0,255,255,0.04) 0%, transparent 60%);
+  pointer-events:none;
+  z-index:0;
+  animation: proAmbient 12s ease-in-out infinite alternate;
+}
+@keyframes proAmbient {
+  0%{background:radial-gradient(ellipse 60% 40% at 20% 10%,rgba(112,0,255,0.08) 0%,transparent 60%),radial-gradient(ellipse 50% 30% at 80% 90%,rgba(255,0,122,0.06) 0%,transparent 60%),radial-gradient(ellipse 40% 40% at 60% 40%,rgba(0,255,255,0.04) 0%,transparent 60%);}
+  100%{background:radial-gradient(ellipse 60% 40% at 30% 20%,rgba(112,0,255,0.12) 0%,transparent 60%),radial-gradient(ellipse 50% 30% at 70% 80%,rgba(255,0,122,0.09) 0%,transparent 60%),radial-gradient(ellipse 40% 40% at 50% 50%,rgba(0,255,255,0.06) 0%,transparent 60%);}
+}
+
+/* Grid scanlines overlay */
+body.pro::after {
+  content:'';
+  position:fixed;inset:0;
+  background-image: repeating-linear-gradient(0deg, transparent, transparent 39px, rgba(112,0,255,0.03) 39px, rgba(112,0,255,0.03) 40px);
+  pointer-events:none;
+  z-index:0;
+}
+
+body.pro #app, body.pro .topbar, body.pro .modal, body.pro .confirm-box { position:relative; z-index:1; }
+
+/* PRO TOPBAR */
+body.pro .topbar {
+  background: rgba(7,7,26,0.92);
+  border-bottom: 1px solid rgba(112,0,255,0.3);
+  backdrop-filter: blur(20px) saturate(1.5);
+  box-shadow: 0 1px 0 rgba(112,0,255,0.2), 0 4px 30px rgba(0,0,0,0.5);
+  padding: 10px 16px;
+}
+body.pro .topbar h1 {
+  font-family: 'Space Grotesk', sans-serif;
+  font-weight: 700;
+  font-size: 1.25rem;
+  letter-spacing: -0.02em;
+  background: linear-gradient(135deg, #7000ff 0%, #ff007a 50%, #00ffff 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  background-size: 200% 200%;
+  animation: proTitleShift 6s ease infinite;
+}
+@keyframes proTitleShift {
+  0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}
+}
+
+/* PRO BUTTONS */
+body.pro .btn {
+  font-family: 'Space Grotesk', sans-serif;
+  font-weight: 600;
+  font-size: 12px;
+  letter-spacing: 0.01em;
+  border-radius: 8px;
+  transition: all .18s cubic-bezier(.4,0,.2,1);
+  position: relative;
+  overflow: hidden;
+}
+body.pro .btn::after {
+  content:'';
+  position:absolute;inset:0;
+  background:linear-gradient(135deg,rgba(255,255,255,0.05),transparent);
+  pointer-events:none;
+}
+body.pro .btn:hover { transform: translateY(-1px); }
+body.pro .btn:active { transform: translateY(0); }
+body.pro .btn-primary {
+  background: linear-gradient(135deg, rgba(112,0,255,0.3), rgba(255,0,122,0.15));
+  border-color: rgba(112,0,255,0.6);
+  color: #c080ff;
+  box-shadow: 0 0 12px rgba(112,0,255,0.15), inset 0 1px 0 rgba(255,255,255,0.06);
+}
+body.pro .btn-primary:hover {
+  background: linear-gradient(135deg, rgba(112,0,255,0.45), rgba(255,0,122,0.25));
+  box-shadow: 0 0 20px rgba(112,0,255,0.3), 0 4px 15px rgba(0,0,0,0.3);
+  border-color: rgba(112,0,255,0.9);
+  color: #d0a0ff;
+}
+body.pro .btn-success {
+  background: linear-gradient(135deg, rgba(0,255,136,0.15), rgba(0,200,100,0.1));
+  border-color: rgba(0,255,136,0.5);
+  color: #00ff88;
+  box-shadow: 0 0 10px rgba(0,255,136,0.1);
+}
+body.pro .btn-danger {
+  background: linear-gradient(135deg, rgba(255,34,85,0.15), rgba(200,0,50,0.1));
+  border-color: rgba(255,34,85,0.5);
+  color: #ff2255;
+}
+body.pro .btn-danger:hover { box-shadow: 0 0 15px rgba(255,34,85,0.25); }
+
+/* PRO INPUTS */
+body.pro input[type=text],body.pro input[type=number],body.pro input[type=url],
+body.pro input[type=search],body.pro select,body.pro textarea {
+  background: rgba(7,7,26,0.8);
+  border-color: rgba(112,0,255,0.2);
+  color: var(--text);
+  font-family: 'Space Grotesk', sans-serif;
+  border-radius: 9px;
+  backdrop-filter: blur(4px);
+}
+body.pro input:focus,body.pro select:focus,body.pro textarea:focus {
+  border-color: rgba(112,0,255,0.7);
+  box-shadow: 0 0 0 2px rgba(112,0,255,0.12), 0 0 15px rgba(112,0,255,0.1);
+  outline: none;
+}
+body.pro #fCardCode { font-family: 'JetBrains Mono', monospace !important; }
+
+/* PRO HERO STATS */
+body.pro .hero-stats { gap: 10px; margin: 12px 0; }
+body.pro .hero-card {
+  background: linear-gradient(135deg, rgba(7,7,26,0.9), rgba(13,13,36,0.9));
+  border: 1px solid rgba(112,0,255,0.15);
+  border-radius: 14px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.03);
+  backdrop-filter: blur(8px);
+  transition: transform .2s, box-shadow .2s;
+}
+body.pro .hero-card:hover { transform: translateY(-2px); box-shadow: 0 8px 30px rgba(112,0,255,0.15); }
+body.pro .hero-card .lbl { font-size: 10px; letter-spacing: 0.06em; text-transform: uppercase; }
+body.pro .hero-card.c-cyan .num {
+  background: linear-gradient(135deg, #00ffff, #7000ff);
+  -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;
+}
+body.pro .hero-card.c-gold .num {
+  background: linear-gradient(135deg, #ffcc00, #ff7700);
+  -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;
+}
+body.pro .hero-card.c-green .num {
+  background: linear-gradient(135deg, #00ff88, #00ccaa);
+  -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;
+}
+body.pro .hero-card.c-purple .num {
+  background: linear-gradient(135deg, #bf00ff, #7000ff);
+  -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;
+}
+
+/* PRO PROGRESS BARS */
+body.pro .pfill {
+  background: linear-gradient(90deg, #7000ff, #ff007a, #00ffff);
+  background-size: 200% 100%;
+  animation: proBar 3s linear infinite;
+}
+@keyframes proBar { 0%{background-position:0%}100%{background-position:200%} }
+
+/* PRO ANIME GRID */
+body.pro .anime-grid { gap: 12px; }
+body.pro .anime-card {
+  background: linear-gradient(160deg, rgba(7,7,26,0.95), rgba(13,13,36,0.95));
+  border: 1px solid rgba(112,0,255,0.12);
+  border-radius: 16px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+  transition: transform .25s cubic-bezier(.4,0,.2,1), box-shadow .25s, border-color .25s;
+  overflow: hidden;
+}
+body.pro .anime-card:hover {
+  transform: translateY(-8px) scale(1.02);
+  border-color: rgba(112,0,255,0.5);
+  box-shadow: 0 16px 50px rgba(112,0,255,0.2), 0 0 0 1px rgba(112,0,255,0.2);
+}
+body.pro .anime-card.completed { border-color: rgba(0,255,136,0.5); }
+body.pro .anime-card.completed::after {
+  background: linear-gradient(135deg, #00ff88, #00ccaa);
+  color: #000;
+  font-weight: 800;
+}
+body.pro .anime-card img { border-radius: 0; }
+body.pro .anime-card .ac-name { font-weight: 700; font-size: 13px; letter-spacing: -0.01em; }
+body.pro .anime-card .ac-prog { font-size: 10px; letter-spacing: 0.03em; text-transform: uppercase; color: var(--text3); }
+
+/* PRO TABS */
+body.pro .tabs {
+  border-bottom: 1px solid rgba(112,0,255,0.15);
+  gap: 2px;
+  padding-bottom: 0;
+}
+body.pro .tab {
+  font-family: 'Space Grotesk', sans-serif;
+  font-weight: 600;
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  padding: 8px 16px;
+  border-radius: 8px 8px 0 0;
+  color: var(--text3);
+  transition: all .15s;
+}
+body.pro .tab:hover { color: var(--text); background: rgba(112,0,255,0.08); }
+body.pro .tab.active {
+  color: #c080ff;
+  border-bottom: 2px solid #7000ff;
+  background: rgba(112,0,255,0.08);
+  box-shadow: 0 -1px 10px rgba(112,0,255,0.1);
+}
+
+/* PRO TOOLBAR */
+body.pro .toolbar {
+  background: rgba(7,7,26,0.8);
+  border: 1px solid rgba(112,0,255,0.12);
+  border-radius: 12px;
+  backdrop-filter: blur(10px);
+  gap: 8px;
+  padding: 10px 12px;
+}
+body.pro .filter-chip {
+  background: rgba(112,0,255,0.08);
+  border: 1px solid rgba(112,0,255,0.2);
+  border-radius: 20px;
+  color: var(--text3);
+  font-family: 'Space Grotesk', sans-serif;
+  font-weight: 600;
+  font-size: 11px;
+  letter-spacing: 0.02em;
+  transition: all .15s;
+}
+body.pro .filter-chip:hover { background: rgba(112,0,255,0.15); color: var(--text); }
+body.pro .filter-chip.on { background: rgba(112,0,255,0.25); border-color: rgba(112,0,255,0.7); color: #c080ff; box-shadow: 0 0 10px rgba(112,0,255,0.15); }
+body.pro .filter-chip.on.gold { background: rgba(255,204,0,0.15); border-color: rgba(255,204,0,0.6); color: #ffcc00; }
+
+/* PRO SECTION HEADERS */
+body.pro .section-head { border-bottom: 1px solid rgba(112,0,255,0.1); padding: 8px 0; }
+body.pro .section-head .sh-title {
+  font-family: 'Space Grotesk', sans-serif;
+  font-weight: 700;
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #7000ff;
+  text-shadow: 0 0 12px rgba(112,0,255,0.5);
+}
+body.pro .section-head .sh-count { color: var(--text2); }
+body.pro .section-head .sh-pct { color: var(--text3); }
+
+/* PRO CARDS */
+body.pro .card {
+  width: 170px;
+  background: linear-gradient(170deg, rgba(7,7,26,0.98), rgba(3,3,15,0.98));
+  border: 1px solid rgba(112,0,255,0.1);
+  border-radius: 16px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.6);
+  transition: transform .25s cubic-bezier(.4,0,.2,1), box-shadow .25s, border-color .25s;
+  overflow: hidden;
+}
+body.pro .card:hover {
+  transform: translateY(-6px) scale(1.015);
+  box-shadow: 0 16px 40px rgba(112,0,255,0.18), 0 0 0 1px rgba(112,0,255,0.2);
+  border-color: rgba(112,0,255,0.4);
+}
+body.pro .card.not-obtained { opacity: .6; filter: saturate(0.3); }
+body.pro .card.not-obtained:hover { opacity: 0.85; filter: saturate(0.5); }
+body.pro .card.shiny {
+  border-color: rgba(255,204,0,0.7) !important;
+  box-shadow: 0 0 20px rgba(255,204,0,0.4), 0 0 60px rgba(255,140,0,0.15), 0 4px 20px rgba(0,0,0,0.6) !important;
+}
+body.pro .card.shiny:hover {
+  box-shadow: 0 0 30px rgba(255,204,0,0.6), 0 0 80px rgba(255,140,0,0.2), 0 16px 40px rgba(0,0,0,0.6) !important;
+}
+body.pro .card img { border-radius: 0; }
+body.pro .card .card-body { padding: 10px; }
+body.pro .card .card-name {
+  font-family: 'Space Grotesk', sans-serif;
+  font-weight: 700;
+  font-size: 12px;
+  letter-spacing: -0.01em;
+}
+body.pro .card .pwr {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  color: var(--text3);
+  letter-spacing: 0.05em;
+}
+body.pro .card .obtained-badge {
+  background: linear-gradient(135deg, #00ff88, #00cc66);
+  color: #003322;
+  font-family: 'Space Grotesk', sans-serif;
+  font-weight: 800;
+  font-size: 9px;
+  border-radius: 6px;
+  box-shadow: 0 2px 8px rgba(0,255,136,0.4);
+}
+body.pro .card .new-badge {
+  background: linear-gradient(135deg, #7000ff, #ff007a);
+  color: #fff;
+  font-family: 'Space Grotesk', sans-serif;
+  font-weight: 800;
+  border-radius: 6px;
+  box-shadow: 0 2px 8px rgba(112,0,255,0.4);
+}
+
+/* PRO RARITY BADGES */
+body.pro .rbd {
+  font-family: 'Space Grotesk', sans-serif;
+  font-weight: 700;
+  font-size: 9px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  border-radius: 6px;
+}
+body.pro .rbd.bronze { background: rgba(205,127,50,0.15); color: #cd7f32; border: 1px solid rgba(205,127,50,0.3); }
+body.pro .rbd.silver { background: rgba(192,192,192,0.1); color: #d0d0d0; border: 1px solid rgba(192,192,192,0.25); }
+body.pro .rbd.gold { background: rgba(255,204,0,0.12); color: #ffcc00; border: 1px solid rgba(255,204,0,0.3); box-shadow: 0 0 6px rgba(255,204,0,0.15); }
+body.pro .rbd.diamond { background: rgba(0,255,255,0.1); color: #00ffff; border: 1px solid rgba(0,255,255,0.25); box-shadow: 0 0 8px rgba(0,255,255,0.2); }
+body.pro .rbd.mythic { background: rgba(191,0,255,0.15); color: #bf00ff; border: 1px solid rgba(191,0,255,0.35); box-shadow: 0 0 10px rgba(191,0,255,0.3); }
+body.pro .rbd.radiant {
+  background: linear-gradient(135deg, rgba(191,0,255,0.15), rgba(255,0,122,0.1));
+  color: #ff88ff;
+  border: 1px solid rgba(255,136,255,0.4);
+  box-shadow: 0 0 12px rgba(255,136,255,0.35);
+  animation: proRadGlow 1.8s ease-in-out infinite alternate;
+}
+@keyframes proRadGlow {
+  from { box-shadow: 0 0 8px rgba(255,136,255,0.3); border-color: rgba(255,136,255,0.3); }
+  to { box-shadow: 0 0 18px rgba(255,136,255,0.7), 0 0 30px rgba(191,0,255,0.2); border-color: rgba(255,136,255,0.7); }
+}
+
+/* PRO CODE BADGE */
+body.pro .card-code-badge,
+body.pro [style*="font-family:monospace"] {
+  font-family: 'JetBrains Mono', monospace !important;
+}
+body.pro .card-body [style*="font-family:monospace"] {
+  color: rgba(112,0,255,0.9) !important;
+  background: rgba(112,0,255,0.08) !important;
+  border: 1px solid rgba(112,0,255,0.2) !important;
+  border-radius: 6px;
+  padding: 1px 6px;
+  font-size: 9px !important;
+  letter-spacing: 0.05em;
+  box-shadow: 0 0 6px rgba(112,0,255,0.15);
+}
+
+/* PRO LIST VIEW */
+body.pro .card-list-item {
+  background: rgba(7,7,26,0.85);
+  border: 1px solid rgba(112,0,255,0.1);
+  border-radius: 12px;
+  backdrop-filter: blur(6px);
+  transition: border-color .15s, box-shadow .15s;
+}
+body.pro .card-list-item:hover {
+  border-color: rgba(112,0,255,0.35);
+  box-shadow: 0 4px 20px rgba(112,0,255,0.1);
+}
+body.pro .cli-name { font-family: 'Space Grotesk', sans-serif; font-weight: 700; }
+body.pro .cli-meta { font-size: 11px; font-family: 'Space Grotesk', sans-serif; }
+
+/* PRO MODAL */
+body.pro .modal {
+  background: linear-gradient(170deg, rgba(7,7,26,0.98), rgba(3,3,15,0.98));
+  border: 1px solid rgba(112,0,255,0.3);
+  border-radius: 20px;
+  box-shadow: 0 30px 100px rgba(0,0,0,0.9), 0 0 60px rgba(112,0,255,0.08);
+  backdrop-filter: blur(20px);
+}
+body.pro .modal-name { font-family: 'Space Grotesk', sans-serif; font-weight: 700; letter-spacing: -0.02em; }
+body.pro .modal-overlay { background: rgba(0,0,0,0.85); backdrop-filter: blur(4px); }
+body.pro .modal-img { border-radius: 0 0 0 0; }
+
+/* PRO STATS */
+body.pro .stats-section {
+  background: rgba(7,7,26,0.85);
+  border: 1px solid rgba(112,0,255,0.12);
+  border-radius: 14px;
+  backdrop-filter: blur(8px);
+  box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+}
+body.pro .stats-section h4 {
+  font-family: 'Space Grotesk', sans-serif;
+  font-weight: 700;
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #7000ff;
+}
+body.pro .stat-row .sr-label { font-family: 'Space Grotesk', sans-serif; font-size: 11px; }
+body.pro .stat-row .sr-val { font-family: 'JetBrains Mono', monospace; font-size: 11px; }
+
+/* PRO BACK HEADER */
+body.pro .back-header { border-bottom: 1px solid rgba(112,0,255,0.12); }
+body.pro .back-header h2 { font-family: 'Space Grotesk', sans-serif; font-weight: 700; letter-spacing: -0.02em; }
+
+/* PRO TOAST */
+body.pro .toast {
+  background: rgba(7,7,26,0.95);
+  border: 1px solid rgba(112,0,255,0.4);
+  backdrop-filter: blur(20px);
+  box-shadow: 0 8px 30px rgba(0,0,0,0.5), 0 0 20px rgba(112,0,255,0.1);
+  font-family: 'Space Grotesk', sans-serif;
+  font-weight: 600;
+  font-size: 13px;
+  border-radius: 14px;
+}
+
+/* PRO CONFIRM DIALOG */
+body.pro .confirm-box {
+  background: rgba(7,7,26,0.97);
+  border: 1px solid rgba(112,0,255,0.3);
+  border-radius: 18px;
+  backdrop-filter: blur(20px);
+  box-shadow: 0 20px 60px rgba(0,0,0,0.8);
+}
+
+/* PRO FUUKA IMPORTER */
+body.pro #fuukaInput {
+  font-family: 'JetBrains Mono', monospace;
+  background: rgba(3,3,15,0.9);
+  border-color: rgba(112,0,255,0.2);
+  border-radius: 10px;
+  font-size: 12px;
+  color: #c080ff;
+  line-height: 1.5;
+}
+
+/* PRO SECTION HEADER LABEL COLORS */
+body.pro .sh-title[style*="🟦"] { color: #00aaff; }
+
+/* PRO VIEW TOGGLE */
+body.pro .view-btn {
+  background: rgba(112,0,255,0.08);
+  border-color: rgba(112,0,255,0.2);
+  color: var(--text3);
+  border-radius: 8px;
+  font-size: 14px;
+  transition: all .15s;
+}
+body.pro .view-btn.active { background: rgba(112,0,255,0.25); border-color: rgba(112,0,255,0.6); color: #c080ff; }
+
+/* PRO ANIME FORM MODAL */
+body.pro .modal h3 { font-family: 'Space Grotesk', sans-serif; font-weight: 700; }
+
+/* PRO SELECT DROPDOWN ARROW */
+body.pro select { background-image: none; }
+
+/* PRO CHECKBOX */
+body.pro input[type=checkbox] { accent-color: #7000ff; }
+
+/* PRO POWER COLOR GRADIENT BAR override */
+body.pro .card .pbar .pfill[style] { background: linear-gradient(90deg, #7000ff, #ff007a) !important; }
+
+/* PRO QUICK STATS PANEL — shown only in PRO on main page */
+body.pro #proQuickPanel {
+  display: block !important;
+  background: rgba(7,7,26,0.7);
+  border: 1px solid rgba(112,0,255,0.15);
+  border-radius: 14px;
+  padding: 12px 16px;
+  margin: 10px 0;
+  backdrop-filter: blur(8px);
+  font-family: 'Space Grotesk', sans-serif;
+}
+#proQuickPanel { display: none; }
+
+/* PRO TAG on topbar btn */
+body.pro #modeToggleBtn.pro-active {
+  background: linear-gradient(135deg, #7000ff, #ff007a) !important;
+  border-color: #bf00ff !important;
+  color: #fff !important;
+  box-shadow: 0 0 20px rgba(112,0,255,0.4) !important;
+  font-weight: 700;
+}
+
+/* PRO SHINE ANIMATION ON SHINY CARDS */
+body.pro .card.shiny::before {
+  content:'';
+  position:absolute;inset:0;
+  background: linear-gradient(110deg, transparent 30%, rgba(255,220,0,0.08) 50%, transparent 70%);
+  animation: proShine 2.5s ease-in-out infinite;
+  pointer-events:none;
+  z-index:1;
+  border-radius: 16px;
+}
+@keyframes proShine { 0%{transform:translateX(-100%)}100%{transform:translateX(200%)} }
+
+/* PRO POWER BAR COLORS BY LEVEL */
+body.pro .pfill.mythic-bar { background: linear-gradient(90deg, #7000ff, #bf00ff) !important; animation: none; }
+body.pro .pfill.cyan-bar { background: linear-gradient(90deg, #00aaff, #00ffff) !important; animation: none; }
+body.pro .pfill.gold-bar { background: linear-gradient(90deg, #ff7700, #ffcc00) !important; animation: none; }
+body.pro .pfill.silver-bar { background: linear-gradient(90deg, #888, #ddd) !important; animation: none; }
+body.pro .pfill.bronze-bar { background: linear-gradient(90deg, #7a4010, #cd7f32) !important; animation: none; }
+
+/* PRO HISTORY */
+body.pro #historyContent .stats-section { background: rgba(7,7,26,0.85); }
+
+/* Smooth transitions for PRO */
+body.pro .card, body.pro .anime-card, body.pro .btn, body.pro .tab,
+body.pro .filter-chip, body.pro .card-list-item { transition-timing-function: cubic-bezier(.4,0,.2,1); }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <h1>🎴 Anime Cards</h1>
+  <div class="topbar-btns">
+    <button class="btn btn-primary btn-sm" onclick="exportData()">📤 Exportar</button>
+    <button class="btn btn-sm" onclick="exportBackup()">💾 Backup</button>
+    <label class="btn btn-sm" style="cursor:pointer;display:inline-flex;align-items:center;">
+      📥 Importar<input type="file" accept=".json" style="display:none" onchange="importData(event)">
+    </label>
+    <button id="modeToggleBtn" class="btn btn-sm btn-primary" onclick="cycleMode()">✨ Mejorado</button>
+    <button id="proToggleBtn" class="btn btn-sm" onclick="cycleMode()" style="display:none;">🔥 PRO</button>
+  </div>
+</div>
+
+<div id="app">
+
+<!-- ====== MAIN PAGE ====== -->
+<div id="pgMain" class="page active">
+  <div id="heroStats" class="hero-stats" style="margin-top:10px;"></div>
+  <div id="proQuickPanel">
+    <div id="proQuickInner"></div>
+  </div>
+ <div class="stats-section" style="border-color: var(--cyan); margin-top: 10px;">
+  <h4 style="color: var(--cyan); margin-bottom: 8px; display: flex; align-items: center; gap: 8px;">
+    📥 Importador de Fuuka Bot
+  </h4>
+  <textarea id="fuukaInput" rows="3" style="width: 100%; margin-bottom: 8px; font-family: monospace;" placeholder="Pega aquí el mensaje del bot..."></textarea>
+  <button class="btn btn-success" style="width: 100%; font-weight: bold;" onclick="processFuukaMessage()">⚡ Procesar e Importar Cartas</button>
+</div>
+
+  
+  <div style="display:flex;justify-content:space-between;align-items:center;margin:10px 0 6px;">
+    <span style="font-size:13px;color:var(--text2);">📚 Mis Animes</span>
+    <button class="btn btn-primary btn-sm" onclick="openAnimeForm()">+ Agregar Anime</button>
+  </div>
+
+  <div class="search-bar">
+    <input type="search" id="srchAnime" placeholder="🔎 Buscar anime..." oninput="renderAnimes()" style="max-width:220px;">
+    <select id="sortAnime" onchange="renderAnimes()" style="font-size:12px;">
+      <option value="default">Orden guardado</option>
+      <option value="az">A → Z</option>
+      <option value="progress">Mayor progreso</option>
+      <option value="total">Más cartas</option>
+    </select>
+  </div>
+
+  <div id="animeGrid" class="anime-grid"></div>
+</div>
+
+<!-- ====== ANIME FORM MODAL ====== -->
+<div id="animeFormModal" class="modal-overlay" style="display:none;">
+  <div class="modal" style="max-width:340px;">
+    <div class="modal-body">
+      <h3 id="animeFormTitle" style="margin-bottom:12px;font-size:1rem;">➕ Nuevo Anime</h3>
+      <div class="form-group" style="margin-bottom:8px;">
+        <label>Nombre</label>
+        <input type="text" id="fAnimeName" placeholder="Ej: Naruto, Attack on Titan...">
+      </div>
+      <div class="form-group" style="margin-bottom:8px;">
+        <label>URL Imagen</label>
+        <input type="url" id="fAnimeImg" placeholder="https://...">
+      </div>
+      <div class="form-group" style="margin-bottom:8px;">
+        <label>Tag de serie</label>
+        <input type="text" id="fAnimeTag" placeholder="Ej: azurlane" maxlength="40" style="font-family:monospace;">
+      </div>
+      <div style="margin-top:8px;">
+        <img id="fAnimePreview" src="" style="width:80px;height:80px;object-fit:cover;border-radius:8px;display:none;border:1px solid var(--border);">
+      </div>
+      <div class="form-actions">
+        <button class="btn btn-primary" onclick="saveAnime()">💾 Guardar</button>
+        <button class="btn" onclick="closeAnimeForm()">✖ Cancelar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ====== ANIME VIEW PAGE ====== -->
+<div id="pgAnime" class="page">
+  <div class="back-header">
+    <button class="btn btn-sm btn-icon" onclick="goBack()">← Volver</button>
+    <img id="avImg" class="anime-header-img" src="" onerror="this.style.display='none'">
+    <h2 id="avTitle"></h2>
+    <button class="btn btn-sm btn-icon" onclick="editCurrentAnime()">✏️</button>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('col',this)">🗂 Colección</button>
+    <button class="tab" onclick="switchTab('stats',this)">📊 Estadísticas</button>
+    <button class="tab" onclick="switchTab('addcard',this)">➕ Agregar</button>
+    <button class="tab" onclick="switchTab('history',this)">📋 Historial</button>
+  </div>
+
+  <!-- COLLECTION TAB -->
+  <div id="tabCol">
+    <div class="toolbar">
+      <input type="search" id="srchCard" placeholder="🔎 Buscar carta..." oninput="renderCards()" style="min-width:130px;max-width:180px;">
+      <div style="display:flex;gap:4px;flex-wrap:wrap;">
+        <span class="filter-chip" id="chipMissing" onclick="toggleChip('missing')">❌ Faltantes</span>
+        <span class="filter-chip" id="chipShiny" onclick="toggleChip('shiny')">✨ Shiny</span>
+        <span class="filter-chip" id="chipObtained" onclick="toggleChip('obtained')">✅ Obtenidas</span>
+      </div>
+      <select id="flRarity" onchange="renderCards()" style="font-size:11px;">
+        <option value="">Toda rareza</option>
+        <option value="bronze">Bronce</option>
+        <option value="silver">Plata</option>
+        <option value="gold">Oro</option>
+        <option value="diamond">Diamante</option>
+        <option value="mythic">Mythic</option>
+        <option value="radiant">Radiant</option>
+      </select>
+      <select id="flType" onchange="renderCards()" style="font-size:11px;">
+        <option value="">Todo tipo</option>
+        <option value="normal">Normal</option>
+        <option value="3d">3D</option>
+        <option value="poster">Poster</option>
+        <option value="events">Event</option>
+      </select>
+      <select id="sortCards" onchange="renderCards()" style="font-size:11px;">
+        <option value="default">Orden guardado</option>
+        <option value="az">A → Z</option>
+        <option value="power-d">Poder ↓</option>
+        <option value="power-a">Poder ↑</option>
+        <option value="rarity-d">Rareza ↓</option>
+        <option value="obtained">Obtenidas primero</option>
+      </select>
+      <div class="view-toggle">
+        <button class="view-btn active" id="vGrid" onclick="setView('grid',this)" title="Cuadrícula">⊞</button>
+        <button class="view-btn" id="vList" onclick="setView('list',this)" title="Lista">☰</button>
+      </div>
+    </div>
+    <div id="cardsContainer"></div>
+  </div>
+
+  <!-- STATS TAB -->
+  <div id="tabStats" style="display:none;">
+    <div id="statsContent"></div>
+  </div>
+
+  <!-- ADD CARD TAB -->
+  <div id="tabAddcard" style="display:none;">
+    <div class="stats-section">
+      <h4 id="cardFormTitle">➕ Nueva Carta</h4>
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Nombre</label>
+          <input type="text" id="fCardName" list="nameSuggestions" placeholder="Nombre de la carta">
+          <datalist id="nameSuggestions"></datalist>
+        </div>
+        <div class="form-group">
+          <label>URL Imagen</label>
+          <input type="url" id="fCardImg" placeholder="https://..." oninput="previewCardImg()">
+        </div>
+        <div class="form-group">
+          <label>Tipo</label>
+          <select id="fCardType">
+            <option value="normal">Normal</option>
+            <option value="3d">3D</option>
+            <option value="poster">Poster</option>
+            <option value="events">Event</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Rareza</label>
+          <select id="fCardRarity">
+            <option value="bronze">🟤 Bronce</option>
+            <option value="silver">⚪ Plata</option>
+            <option value="gold">🟡 Oro</option>
+            <option value="diamond">🔵 Diamante</option>
+            <option value="mythic">🟣 MYTHIC</option>
+            <option value="radiant">✨ Radiant</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Poder (1-100)</label>
+          <input type="number" id="fCardPower" min="1" max="100" placeholder="1-100">
+        </div>
+        <div class="form-group">
+          <label>Código de carta</label>
+          <input type="text" id="fCardCode" placeholder="Ej: a3ee2" maxlength="20" style="font-family:monospace;">
+        </div>
+        <div class="form-group" style="justify-content:flex-end;gap:8px;padding-top:18px;">
+          <label><input type="checkbox" id="fCardShiny"> ✨ Shiny</label>
+          <label><input type="checkbox" id="fCardObtained"> ✅ Obtenida</label>
+        </div>
+      </div>
+      <!-- Image preview -->
+      <div id="cardImgPreview" style="margin-bottom:8px;display:none;">
+        <img id="cardPreviewImg" style="width:80px;height:80px;object-fit:cover;border-radius:8px;border:1px solid var(--border);">
+      </div>
+      <div class="form-actions">
+        <button class="btn btn-primary" onclick="saveCard()">💾 Guardar carta</button>
+        <button class="btn btn-danger btn-sm" id="cancelCardBtn" onclick="cancelCard()" style="display:none;">✖ Cancelar edición</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- HISTORY TAB -->
+  <div id="tabHistory" style="display:none;">
+    <div id="historyContent"></div>
+  </div>
+</div>
+
+<!-- ====== CARD DETAIL MODAL ====== -->
+<div id="cardModal" class="modal-overlay" style="display:none;" onclick="closeCardModal(event)">
+  <div class="modal" onclick="event.stopPropagation()">
+    <img id="cmImg" class="modal-img" src="" onerror="this.src=''" alt="">
+    <div class="modal-body">
+      <div class="modal-name" id="cmName"></div>
+      <div class="modal-meta" id="cmMeta"></div>
+      <div class="modal-pbar" id="cmPbar"></div>
+      <div class="modal-actions" id="cmActions"></div>
+    </div>
+  </div>
+</div>
+
+</div><!-- #app -->
+<div id="toastEl" class="toast"></div>
+
+<script>
+// ===== STATE =====
+let animes = [];
+let currentAnime = null;
+let editingAnime = null;
+let editingCard = null;
+let dragSrc = null;
+let cardView = 'grid';
+let filters = { missing: false, shiny: false, obtained: false };
+let newCards = new Set(); // track recently added
+let lastEditedName = ''; // last edited card name for autocomplete
+const RARITY_RANK = { bronze:1, silver:2, gold:3, diamond:4, mythic:5, radiant:6 };
+const RARITY_LABELS = { bronze:'Bronce', silver:'Plata', gold:'Oro', diamond:'Diamante', mythic:'Mythic', radiant:'Radiant' };
+
+// ===== INIT =====
+function init() {
+  try { animes = JSON.parse(localStorage.getItem('acg_data')) || []; } catch(e) { animes = []; }
+  // migrate old key
+  if (!animes.length) {
+    try { const old = JSON.parse(localStorage.getItem('animes')); if (Array.isArray(old) && old.length) { animes = old; save(); } } catch(e) {}
+  }
+  renderAnimes();
+  updateHeroStats();
+  updateSuggestions();
+  // restore saved mode
+  const savedMode = localStorage.getItem('acg_mode');
+  if (savedMode && savedMode !== 'normal') { currentMode = savedMode; applyMode(); }
+}
+
+function save() { localStorage.setItem('acg_data', JSON.stringify(animes)); }
+
+// ===== TOAST =====
+let toastTimer;
+function toast(msg, color, duration) {
+  const el = document.getElementById('toastEl');
+  el.textContent = msg;
+  el.style.borderColor = color || 'var(--border2)';
+  el.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove('show'), duration || 2800);
+}
+
+// ===== PAGE NAV =====
+function showPage(id) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+function goBack() { showPage('pgMain'); renderAnimes(); updateHeroStats(); currentAnime = null; }
+
+// ===== HERO STATS =====
+function updateHeroStats() {
+  let tc=0, to=0, ts=0, ta=animes.length;
+  animes.forEach(a => a.cards.forEach(c => { if(!c) return; tc++; if(c.obtained) to++; if(c.shiny&&c.obtained) ts++; }));
+  const pct = tc ? Math.round(to/tc*100) : 0;
+  document.getElementById('heroStats').innerHTML = `
+    <div class="hero-card c-cyan"><div class="num">${ta}</div><div class="lbl">Animes</div></div>
+    <div class="hero-card c-cyan"><div class="num">${tc}</div><div class="lbl">Cartas totales</div></div>
+    <div class="hero-card c-green"><div class="num">${to}</div><div class="lbl">Obtenidas</div></div>
+    <div class="hero-card c-gold"><div class="num">${ts}</div><div class="lbl">Shiny ✨</div></div>
+    <div class="hero-card" style="grid-column:span 2 / auto;">
+      <div class="lbl" style="text-align:left;margin-bottom:4px;">Progreso global — <b style="color:var(--cyan)">${pct}%</b></div>
+      <div class="pbar"><div class="pfill" style="width:${pct}%"></div></div>
+    </div>`;
+  if (currentMode === 'pro') renderProQuickPanel();
+}
+
+// ===== ANIME FORM =====
+function openAnimeForm(idx) {
+  editingAnime = idx !== undefined ? idx : null;
+  const modal = document.getElementById('animeFormModal');
+  if (editingAnime !== null) {
+    const a = animes[editingAnime];
+    document.getElementById('fAnimeName').value = a.name;
+    document.getElementById('fAnimeImg').value = a.img || '';
+    document.getElementById('fAnimeTag').value = a.tag || '';
+    document.getElementById('animeFormTitle').textContent = '✏️ Editar Anime';
+    showPreview('fAnimeImg', 'fAnimePreview');
+  } else {
+    document.getElementById('fAnimeName').value = '';
+    document.getElementById('fAnimeImg').value = '';
+    document.getElementById('fAnimeTag').value = '';
+    document.getElementById('fAnimePreview').style.display = 'none';
+    document.getElementById('animeFormTitle').textContent = '➕ Nuevo Anime';
+  }
+  modal.style.display = 'flex';
+  setTimeout(() => document.getElementById('fAnimeName').focus(), 50);
+}
+function closeAnimeForm() { document.getElementById('animeFormModal').style.display = 'none'; }
+function saveAnime() {
+  const name = document.getElementById('fAnimeName').value.trim();
+  const img = document.getElementById('fAnimeImg').value.trim();
+  const tag = document.getElementById('fAnimeTag').value.trim();
+  if (!name) { toast('⚠️ Escribe un nombre', '#e53935'); return; }
+  if (editingAnime !== null) {
+    animes[editingAnime].name = name;
+    animes[editingAnime].img = img;
+    animes[editingAnime].tag = tag;
+    toast('✅ Anime editado');
+  } else {
+    animes.push({ name, img, tag, cards: [], createdAt: Date.now() });
+    toast('✅ Anime agregado');
+  }
+  save(); closeAnimeForm(); renderAnimes(); updateHeroStats();
+}
+function editCurrentAnime() { openAnimeForm(currentAnime); }
+function deleteAnime(i) {
+  confirm2(`¿Eliminar "${animes[i].name}" y todas sus cartas?`, () => {
+    animes.splice(i,1);
+    save(); renderAnimes(); updateHeroStats();
+    toast('🗑 Anime eliminado', '#e53935');
+  });
+}
+function showPreview(inputId, previewId) {
+  const v = document.getElementById(inputId).value.trim();
+  const el = document.getElementById(previewId);
+  if (v) { el.src = v; el.style.display = 'block'; el.onerror = () => el.style.display = 'none'; }
+  else { el.style.display = 'none'; }
+}
+
+// ===== RENDER ANIMES =====
+function renderAnimes() {
+  const grid = document.getElementById('animeGrid');
+  const q = document.getElementById('srchAnime').value.toLowerCase();
+  const sort = document.getElementById('sortAnime').value;
+  let list = animes.map((a,i) => ({...a, _i:i})).filter(a => a.name.toLowerCase().includes(q));
+  if (sort === 'az') list.sort((a,b) => a.name.localeCompare(b.name));
+  else if (sort === 'progress') list.sort((a,b) => animeProgress(b._i) - animeProgress(a._i));
+  else if (sort === 'total') list.sort((a,b) => b.cards.length - a.cards.length);
+  grid.innerHTML = '';
+  if (!list.length) { grid.innerHTML = '<div class="empty">Sin animes aún. ¡Agrega uno!</div>'; return; }
+  list.forEach(a => {
+    const i = a._i;
+    const total = animes[i].cards.filter(c=>c).length;
+    const done = animes[i].cards.filter(c=>c&&c.obtained).length;
+    const pct = total ? Math.round(done/total*100) : 0;
+    const isComplete = total > 0 && done === total;
+    const div = document.createElement('div');
+    div.className = 'anime-card' + (isComplete ? ' completed' : '');
+    div.innerHTML = `
+      <img src="${a.img||''}" onerror="this.src=''" alt="${a.name}" loading="lazy">
+      <div class="ac-body">
+        <div class="ac-name" title="${a.name}">${a.name}</div>
+        <div class="ac-prog">${done}/${total} cartas · ${pct}%</div>
+        <div class="pbar"><div class="pfill" style="width:${pct}%"></div></div>
+        <div class="ac-actions">
+          <button class="btn btn-sm btn-icon" onclick="event.stopPropagation();openAnimeForm(${i})">✏️</button>
+          ${a.tag ? `<button class="btn btn-sm btn-icon" title="Copiar tag: ${a.tag}" onclick="event.stopPropagation();copyTag('${a.tag}',this)">📋</button>` : ''}
+          <button class="btn btn-sm btn-icon btn-danger" onclick="event.stopPropagation();deleteAnime(${i})">🗑</button>
+        </div>
+      </div>`;
+    div.onclick = e => { if (e.target.tagName !== 'BUTTON') openAnime(i); };
+    grid.appendChild(div);
+  });
+}
+
+function animeProgress(i) {
+  const a = animes[i];
+  const total = a.cards.filter(c=>c).length;
+  const done = a.cards.filter(c=>c&&c.obtained).length;
+  return total ? done/total : 0;
+}
+
+// ===== OPEN ANIME =====
+function openAnime(i) {
+  currentAnime = i;
+  filters = { missing: false, shiny: false, obtained: false };
+  ['chipMissing','chipShiny','chipObtained'].forEach(id => document.getElementById(id).classList.remove('on'));
+  document.getElementById('flRarity').value = '';
+  document.getElementById('flType').value = '';
+  document.getElementById('sortCards').value = 'default';
+  document.getElementById('avTitle').textContent = animes[i].name;
+  document.getElementById('avImg').src = animes[i].img || '';
+  showPage('pgAnime');
+  switchTab('col', document.querySelector('.tab'));
+}
+
+// ===== TABS =====
+function switchTab(tab, btn) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+  ['tabCol','tabStats','tabAddcard','tabHistory'].forEach(id => document.getElementById(id).style.display = 'none');
+  if (tab === 'col') { document.getElementById('tabCol').style.display = 'block'; renderCards(); }
+  if (tab === 'stats') { document.getElementById('tabStats').style.display = 'block'; renderStats(); }
+  if (tab === 'addcard') { document.getElementById('tabAddcard').style.display = 'block'; }
+  if (tab === 'history') { document.getElementById('tabHistory').style.display = 'block'; renderHistory(); }
+}
+
+// ===== FILTER CHIPS =====
+function toggleChip(key) {
+  filters[key] = !filters[key];
+  if (key === 'missing' && filters.missing) { filters.obtained = false; document.getElementById('chipObtained').classList.remove('on'); }
+  if (key === 'obtained' && filters.obtained) { filters.missing = false; document.getElementById('chipMissing').classList.remove('on'); }
+  document.getElementById('chip' + key.charAt(0).toUpperCase() + key.slice(1)).classList.toggle('on', filters[key]);
+  renderCards();
+}
+
+// ===== VIEW TOGGLE =====
+function setView(v, btn) {
+  cardView = v;
+  document.querySelectorAll('.view-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderCards();
+}
+
+// ===== CARD FORM =====
+function previewCardImg() {
+  const v = document.getElementById('fCardImg').value.trim();
+  const wrap = document.getElementById('cardImgPreview');
+  const img = document.getElementById('cardPreviewImg');
+  if (v) { img.src = v; wrap.style.display = 'block'; img.onerror = () => wrap.style.display = 'none'; }
+  else { wrap.style.display = 'none'; }
+}
+
+function saveCard() {
+  if (editingCard === null) autoName();
+  const name = document.getElementById('fCardName').value.trim();
+  if (!name) { toast('⚠️ Escribe un nombre', '#e53935'); return; }
+  const card = {
+    name,
+    img: document.getElementById('fCardImg').value.trim(),
+    type: document.getElementById('fCardType').value,
+    rarity: document.getElementById('fCardRarity').value,
+    shiny: document.getElementById('fCardShiny').checked,
+    obtained: document.getElementById('fCardObtained').checked,
+    power: Math.min(100, Math.max(1, parseInt(document.getElementById('fCardPower').value) || 1)),
+    code: document.getElementById('fCardCode').value.trim() || '',
+    addedAt: Date.now()
+  };
+  if (editingCard !== null) {
+    animes[currentAnime].cards[editingCard] = { ...animes[currentAnime].cards[editingCard], ...card };
+    editingCard = null;
+    document.getElementById('cardFormTitle').textContent = '➕ Nueva Carta';
+    document.getElementById('cancelCardBtn').style.display = 'none';
+    toast('✅ Carta editada');
+  } else {
+    animes[currentAnime].cards.push(card);
+    newCards.add(animes[currentAnime].cards.length - 1 + '_' + currentAnime);
+    toast('✅ Carta agregada');
+  }
+  resetCardForm();
+  updateSuggestions(); save();
+  switchTab('col', document.querySelector('.tab'));
+  updateHeroStats();
+}
+
+function cancelCard() {
+  editingCard = null;
+  resetCardForm();
+  document.getElementById('cardFormTitle').textContent = '➕ Nueva Carta';
+  document.getElementById('cancelCardBtn').style.display = 'none';
+}
+
+function resetCardForm() {
+  ['fCardName','fCardImg','fCardPower','fCardCode'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('fCardShiny').checked = false;
+  document.getElementById('fCardObtained').checked = false;
+  document.getElementById('cardImgPreview').style.display = 'none';
+}
+
+function editCard(i) {
+  const c = animes[currentAnime].cards[i];
+  editingCard = i;
+  lastEditedName = c.name;
+  updateSuggestions();
+  document.getElementById('fCardName').value = c.name;
+  document.getElementById('fCardImg').value = c.img || '';
+  document.getElementById('fCardType').value = c.type;
+  document.getElementById('fCardRarity').value = c.rarity;
+  document.getElementById('fCardPower').value = c.power;
+  document.getElementById('fCardCode').value = c.code || '';
+  document.getElementById('fCardShiny').checked = c.shiny;
+  document.getElementById('fCardObtained').checked = c.obtained;
+  document.getElementById('cardFormTitle').textContent = `✏️ Editando: ${c.name}`;
+  document.getElementById('cancelCardBtn').style.display = 'inline-block';
+  previewCardImg();
+  switchTab('addcard', document.querySelectorAll('.tab')[2]);
+}
+
+function deleteCard(i) {
+  confirm2(`¿Eliminar "${animes[currentAnime].cards[i].name}"?`, () => {
+    animes[currentAnime].cards.splice(i,1);
+    save(); renderCards(); updateHeroStats();
+    toast('🗑 Carta eliminada', '#e53935');
+  });
+}
+
+function toggleObtained(i) {
+  animes[currentAnime].cards[i].obtained = !animes[currentAnime].cards[i].obtained;
+  save(); renderCards(); updateHeroStats();
+}
+
+function moveCard(cardIdx, targetIdx) {
+  targetIdx = parseInt(targetIdx);
+  if (isNaN(targetIdx) || targetIdx === currentAnime) return;
+  const card = animes[currentAnime].cards.splice(cardIdx, 1)[0];
+  animes[targetIdx].cards.push(card);
+  save(); renderCards(); updateHeroStats();
+  toast(`↪ Movida a ${animes[targetIdx].name}`);
+}
+
+// ===== AUTO NAME =====
+function autoName() {
+  const inp = document.getElementById('fCardName');
+  const type = document.getElementById('fCardType').value;
+  let base = inp.value.trim().replace(/\s(Ed\s*\d+|Poster\s*\d*|3D\s*\d*|Event\s*\d*)$/i,'').trim();
+  const suffix = { normal:'Ed', '3d':'3D', poster:'Poster', events:'Event' }[type] || '';
+  if (type === 'normal') {
+    let n = 0;
+    animes.forEach(a => a.cards.forEach(c => { if(c&&c.name&&new RegExp(`^${base}( Ed \\d+)?$`,'i').test(c.name)) n++; }));
+    inp.value = n === 0 ? base : `${base} Ed ${n+1}`;
+  } else {
+    let n = 0;
+    animes.forEach(a => a.cards.forEach(c => { if(c&&c.name&&new RegExp(`^${base} ${suffix}( \\d+)?$`,'i').test(c.name)) n++; }));
+    inp.value = n === 0 ? `${base} ${suffix}` : `${base} ${suffix} ${n+1}`;
+  }
+}
+
+// ===== RENDER CARDS =====
+function getFilteredCards(type) {
+  const q = document.getElementById('srchCard').value.toLowerCase();
+  const flR = document.getElementById('flRarity').value;
+  const flT = document.getElementById('flType').value;
+  const sort = document.getElementById('sortCards').value;
+  let arr = animes[currentAnime].cards.map((c,i) => ({...c, _i:i})).filter(c => {
+    if (!c||!c.name) return false;
+    if (type && c.type !== type) return false;
+    if (flT && c.type !== flT) return false;
+    if (!c.name.toLowerCase().includes(q)) return false;
+    if (filters.missing && c.obtained) return false;
+    if (filters.shiny && !c.shiny) return false;
+    if (filters.obtained && !c.obtained) return false;
+    if (flR && c.rarity !== flR) return false;
+    return true;
+  });
+  if (sort === 'az') arr.sort((a,b) => a.name.localeCompare(b.name));
+  else if (sort === 'power-d') arr.sort((a,b) => b.power-a.power);
+  else if (sort === 'power-a') arr.sort((a,b) => a.power-b.power);
+  else if (sort === 'rarity-d') arr.sort((a,b) => RARITY_RANK[b.rarity]-RARITY_RANK[a.rarity]);
+  else if (sort === 'obtained') arr.sort((a,b) => (b.obtained?1:0)-(a.obtained?1:0));
+  return arr;
+}
+
+function pwrColor(p) {
+  if (p>=90) return '#c340ff';
+  if (p>=70) return '#00e5ff';
+  if (p>=50) return '#ffd700';
+  if (p>=30) return '#c0c0c0';
+  return '#cd7f32';
+}
+function pwrBarClass(p) {
+  if (p>=90) return 'mythic-bar';
+  if (p>=70) return 'cyan-bar';
+  if (p>=50) return 'gold-bar';
+  if (p>=30) return 'silver-bar';
+  return 'bronze-bar';
+}
+
+function renderCards() {
+  const cont = document.getElementById('cardsContainer');
+  cont.innerHTML = '';
+  const flType = document.getElementById('flType').value;
+  const sections = flType ? [[flType, {normal:'🟦 NORMALES','3d':'🟥 3D',poster:'🟨 POSTERS',events:'🟪 EVENTS'}[flType]||flType]] :
+    [['normal','🟦 NORMALES'],['3d','🟥 3D'],['poster','🟨 POSTERS'],['events','🟪 EVENTS']];
+
+  sections.forEach(([type, label]) => {
+    const allOfType = animes[currentAnime].cards.filter(c=>c&&c.type===type);
+    if (!allOfType.length) return;
+    const visible = getFilteredCards(type);
+    const done = allOfType.filter(c=>c.obtained).length;
+    const pct = allOfType.length ? Math.round(done/allOfType.length*100) : 0;
+
+    const sec = document.createElement('div');
+    const head = document.createElement('div');
+    head.className = 'section-head';
+    head.innerHTML = `<span class="sh-title">${label}</span>
+      <span class="sh-count">${done}/${allOfType.length}</span>
+      <span class="sh-pct">(${pct}%)</span>
+      <div style="flex:1;margin:0 8px;"><div class="pbar" style="height:5px;"><div class="pfill" style="width:${pct}%"></div></div></div>
+      <span class="sh-arrow">▾</span>`;
+    const body = document.createElement('div');
+    body.className = cardView === 'grid' ? 'section-body' : '';
+
+    let collapsed = localStorage.getItem('sec_' + type) === '1';
+    if (collapsed) { body.classList.add('hidden'); head.classList.add('collapsed'); }
+
+    head.onclick = () => {
+      const isHidden = body.classList.toggle('hidden');
+      head.classList.toggle('collapsed', isHidden);
+      localStorage.setItem('sec_' + type, isHidden ? '1' : '0');
+    };
+    sec.appendChild(head); sec.appendChild(body);
+    cont.appendChild(sec);
+
+    if (!visible.length) {
+      body.innerHTML = '<div class="empty" style="padding:14px;">Sin resultados para este filtro</div>';
+      return;
+    }
+    visible.forEach(c => { body.appendChild(cardView === 'grid' ? makeCardEl(c) : makeListItem(c)); });
+  });
+}
+
+function makeCardEl(c) {
+  const i = c._i;
+  const div = document.createElement('div');
+  div.className = 'card' + (c.type==='poster'?' poster-card':'') + (c.shiny?' shiny':'') + (c.obtained?'':' not-obtained');
+  div.draggable = true;
+  div.dataset.index = i;
+  div.innerHTML = `
+    ${c.obtained?'<span class="obtained-badge">✓</span>':''}
+    <img src="${c.img||''}" class="${c.obtained?'':'gray'}" onerror="this.src=''" loading="lazy" alt="${c.name}">
+    <div class="card-body">
+      <div class="card-name" title="${c.name}">${c.name}</div>
+      <div class="card-tags">
+        <span class="rdot ${c.rarity}"></span>
+        <span class="rbd ${c.rarity}">${RARITY_LABELS[c.rarity]||c.rarity}${c.shiny?' ✨':''}</span>
+      </div>
+      ${c.code ? `<div style="text-align:center;margin-bottom:3px;"><span style="font-family:monospace;font-size:9px;color:var(--text3);background:var(--bg4);border:1px solid var(--border);border-radius:4px;padding:1px 5px;">${c.code}</span></div>` : ''}
+      <div class="pwr">⚡ ${c.power}/100</div>
+      <div class="pbar" style="margin-bottom:5px;"><div class="pfill ${pwrBarClass(c.power)}" style="width:${c.power}%;background:${pwrColor(c.power)};"></div></div>
+      <label style="justify-content:center;margin-bottom:4px;">
+        <input type="checkbox" ${c.obtained?'checked':''} onchange="toggleObtained(${i})"> Obtenida
+      </label>
+      <div class="card-actions">
+        <button class="btn btn-sm btn-icon" onclick="openCardModal(${i})">👁</button>
+        <button class="btn btn-sm btn-icon" onclick="editCard(${i})">✏️</button>
+        ${c.code ? `<button class="btn btn-sm btn-icon" title="Copiar código: ${c.code}" onclick="copyCode('${c.code}',this)">📋</button>` : ''}
+        <button class="btn btn-sm btn-icon btn-danger" onclick="deleteCard(${i})">🗑</button>
+      </div>
+      <select class="card-move" onchange="moveCard(${i},this.value)">
+        <option value="">Mover a...</option>
+        ${animes.map((a,idx)=>idx!==currentAnime?`<option value="${idx}">${a.name}</option>`:'').join('')}
+      </select>
+    </div>`;
+  addDrag(div);
+  return div;
+}
+
+function makeListItem(c) {
+  const i = c._i;
+  const li = document.createElement('div');
+  li.className = 'card-list-item';
+  li.innerHTML = `
+    <img class="cli-img ${c.obtained?'':'gray'}" src="${c.img||''}" onerror="this.src=''" loading="lazy" alt="">
+    <div class="cli-info">
+      <div class="cli-name">${c.name}${c.shiny?' ✨':''}</div>
+      <div class="cli-meta">
+        <span class="rbd ${c.rarity}">${RARITY_LABELS[c.rarity]}</span>
+        · ⚡${c.power} · ${c.type}
+        ${c.obtained?'· <span style="color:var(--green)">✓ Obtenida</span>':'· <span style="color:var(--text3)">Faltante</span>'}
+      </div>
+    </div>
+    <div class="cli-actions">
+      <button class="btn btn-sm btn-icon" onclick="toggleObtained(${i})">${c.obtained?'↩':'✅'}</button>
+      <button class="btn btn-sm btn-icon" onclick="editCard(${i})">✏️</button>
+      ${c.code ? `<button class="btn btn-sm btn-icon" title="Copiar código: ${c.code}" onclick="copyCode('${c.code}',this)">📋</button>` : ''}
+      <button class="btn btn-sm btn-icon btn-danger" onclick="deleteCard(${i})">🗑</button>
+    </div>`;
+  return li;
+}
+
+// ===== CARD DETAIL MODAL =====
+function openCardModal(i) {
+  const c = animes[currentAnime].cards[i];
+  document.getElementById('cmImg').src = c.img || '';
+  document.getElementById('cmImg').className = 'modal-img' + (c.obtained?'':' gray');
+  document.getElementById('cmImg').style.filter = c.obtained ? '' : 'grayscale(100%) brightness(.5)';
+  document.getElementById('cmImg').style.aspectRatio = c.type === 'poster' ? '2/3' : '1';
+  document.getElementById('cmName').textContent = c.name + (c.shiny ? ' ✨' : '');
+  document.getElementById('cmMeta').innerHTML = `
+    <span class="rbd ${c.rarity}">${RARITY_LABELS[c.rarity]}</span>
+    <span style="font-size:12px;color:var(--text2);">⚡ ${c.power}/100 · ${c.type}</span>
+    ${c.obtained?'<span style="color:var(--green);font-size:12px;">✅ Obtenida</span>':'<span style="color:var(--red);font-size:12px;">❌ Faltante</span>'}
+    ${c.code ? `<span style="font-family:monospace;font-size:11px;color:var(--cyan);background:var(--bg3);border:1px solid var(--border2);border-radius:6px;padding:2px 8px;cursor:pointer;" title="Copiar código" onclick="copyCode('${c.code}',this)">📋 ${c.code}</span>` : ''}`;
+  document.getElementById('cmPbar').innerHTML = `<div class="pbar"><div class="pfill" style="width:${c.power}%;background:${pwrColor(c.power)};"></div></div>`;
+  document.getElementById('cmActions').innerHTML = `
+    <button class="btn btn-sm ${c.obtained?'btn-danger':'btn-success'}" onclick="toggleObtained(${i});closeCardModal()">
+      ${c.obtained ? '↩ Marcar faltante' : '✅ Marcar obtenida'}
+    </button>
+    <button class="btn btn-sm btn-primary" onclick="closeCardModal();editCard(${i})">✏️ Editar</button>`;
+  document.getElementById('cardModal').style.display = 'flex';
+}
+function closeCardModal(e) {
+  if (!e || e.target === document.getElementById('cardModal')) {
+    document.getElementById('cardModal').style.display = 'none';
+  }
+}
+
+// ===== DRAG & DROP =====
+function addDrag(el) {
+  el.addEventListener('dragstart', e => { dragSrc = el.dataset.index; el.classList.add('dragging'); e.dataTransfer.effectAllowed='move'; });
+  el.addEventListener('dragend', () => el.classList.remove('dragging'));
+  el.addEventListener('dragover', e => { e.preventDefault(); e.dataTransfer.dropEffect='move'; });
+  el.addEventListener('drop', e => {
+    e.preventDefault();
+    const from = parseInt(dragSrc), to = parseInt(el.dataset.index);
+    if (isNaN(from)||isNaN(to)||from===to) return;
+    const arr = animes[currentAnime].cards;
+    arr.splice(to, 0, arr.splice(from,1)[0]);
+    save(); renderCards();
+  });
+}
+
+// ===== STATS =====
+function renderStats() {
+  if (currentAnime === null) return;
+  const cards = animes[currentAnime].cards.filter(c=>c);
+  const obt = cards.filter(c=>c.obtained);
+  const total = cards.length;
+  const pct = total ? Math.round(obt.length/total*100) : 0;
+  const shinies = cards.filter(c=>c.shiny&&c.obtained);
+  const avgPwr = obt.length ? Math.round(obt.reduce((s,c)=>s+c.power,0)/obt.length) : 0;
+  const strongest = [...obt].sort((a,b)=>b.power-a.power)[0];
+  const weakest = [...obt].sort((a,b)=>a.power-b.power)[0];
+  const types = ['normal','3d','poster','events'];
+  const typeLabels = { normal:'Normal', '3d':'3D', poster:'Poster', events:'Events' };
+
+  const rarityCounts = {};
+  Object.keys(RARITY_RANK).forEach(r => rarityCounts[r] = cards.filter(c=>c.rarity===r));
+
+  document.getElementById('statsContent').innerHTML = `
+    <div class="stats-grid-top" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:8px;margin-bottom:10px;">
+      <div class="hero-card c-cyan"><div class="num">${obt.length}/${total}</div><div class="lbl">Total</div></div>
+      <div class="hero-card c-cyan"><div class="num">${pct}%</div><div class="lbl">Completado</div></div>
+      <div class="hero-card c-gold"><div class="num">${shinies.length}</div><div class="lbl">Shiny ✨</div></div>
+      <div class="hero-card" style=""><div class="num" style="color:#ff9900">${avgPwr}</div><div class="lbl">Poder prom.</div></div>
+    </div>
+
+    <div class="stats-section">
+      <h4>📈 Progreso por tipo</h4>
+      ${types.map(type => {
+        const all = cards.filter(c=>c.type===type);
+        const done = all.filter(c=>c.obtained).length;
+        const p = all.length ? Math.round(done/all.length*100) : 0;
+        return `<div class="stat-row">
+          <span class="sr-label">${typeLabels[type]}</span>
+          <div class="sr-bar"><div class="pbar" style="height:7px;"><div class="pfill" style="width:${p}%"></div></div></div>
+          <span class="sr-val">${done}/${all.length} (${p}%)</span>
+        </div>`;
+      }).join('')}
+    </div>
+
+    <div class="stats-section">
+      <h4>💎 Distribución por rareza</h4>
+      ${Object.entries(rarityCounts).map(([r,arr]) => {
+        const done = arr.filter(c=>c.obtained).length;
+        const p = arr.length ? Math.round(done/arr.length*100) : 0;
+        return `<div class="stat-row">
+          <span class="sr-label" style="display:flex;align-items:center;gap:4px;"><span class="rdot ${r}"></span>${RARITY_LABELS[r]}</span>
+          <div class="sr-bar"><div class="pbar" style="height:7px;"><div class="pfill" style="width:${p}%;background:${pwrColor(arr.length?60:0)};"></div></div></div>
+          <span class="sr-val">${done}/${arr.length}</span>
+        </div>`;
+      }).join('')}
+    </div>
+
+    <div class="stats-section">
+      <h4>🏆 Trofeos</h4>
+      <div class="trophy-list">
+        ${strongest?`<div class="trophy-item"><span class="trophy-icon">💪</span><span>Más fuerte: <b>${strongest.name}</b> (${strongest.power})</span></div>`:''}
+        ${weakest?`<div class="trophy-item"><span class="trophy-icon">🔻</span><span>Más débil: <b>${weakest.name}</b> (${weakest.power})</span></div>`:''}
+        ${shinies.length?`<div class="trophy-item"><span class="trophy-icon">✨</span><span>${shinies.length} carta${shinies.length>1?'s':''} shiny obtenida${shinies.length>1?'s':''}</span></div>`:''}
+        ${pct===100?'<div class="trophy-item"><span class="trophy-icon">🎉</span><span><b>¡Colección completa!</b></span></div>':''}
+        ${pct===0&&total>0?'<div class="trophy-item"><span class="trophy-icon">🌱</span><span>Colección sin empezar</span></div>':''}
+      </div>
+    </div>`;
+}
+
+// ===== CONFIRM DIALOG =====
+function confirm2(msg, cb) {
+  const d = document.createElement('div');
+  d.className = 'confirm-overlay';
+  d.innerHTML = `<div class="confirm-box"><p>${msg}</p><div class="confirm-btns">
+    <button class="btn btn-danger" id="cy">🗑 Eliminar</button>
+    <button class="btn" id="cn">Cancelar</button>
+  </div></div>`;
+  document.body.appendChild(d);
+  d.querySelector('#cy').onclick = () => { cb(); d.remove(); };
+  d.querySelector('#cn').onclick = () => d.remove();
+  d.onclick = e => { if(e.target===d) d.remove(); };
+}
+
+// ===== SUGGESTIONS =====
+function updateSuggestions() {
+  const dl = document.getElementById('nameSuggestions');
+  dl.innerHTML = '';
+  if (lastEditedName) {
+    const o = document.createElement('option');
+    o.value = lastEditedName;
+    dl.appendChild(o);
+  }
+}
+
+// ===== EXPORT / IMPORT =====
+function exportData() {
+  dl(JSON.stringify(animes,null,2), 'anime_cards_save.json');
+  toast('📤 Exportado correctamente');
+}
+function exportBackup() {
+  const d=new Date(), pad=n=>String(n).padStart(2,'0');
+  const stamp=`${d.getFullYear()}${pad(d.getMonth()+1)}${pad(d.getDate())}_${pad(d.getHours())}${pad(d.getMinutes())}`;
+  dl(JSON.stringify(animes,null,2), `anime_cards_backup_${stamp}.json`);
+  toast('💾 Backup guardado');
+}
+function dl(data, name) {
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([data],{type:'application/json'}));
+  a.download=name; a.click();
+}
+function importData(e) {
+  const f=e.target.files[0]; if(!f) return;
+  const r=new FileReader();
+  r.onload=function(ev){
+    try {
+      const data=JSON.parse(ev.target.result);
+      if (!Array.isArray(data)) throw 'bad';
+      animes=data; save(); renderAnimes(); updateHeroStats(); updateSuggestions();
+      toast(`✅ Importados ${data.length} animes`);
+    } catch { toast('❌ Archivo inválido','#e53935'); }
+  };
+  r.readAsText(f); e.target.value='';
+}
+// Función para procesar el mensaje de Fuuka Bot
+function processFuukaMessage() {
+  const inputEl = document.getElementById('fuukaInput');
+  const input = inputEl.value.trim();
+  
+  if (!input) return toast('⚠️ El campo está vacío', '#e53935');
+
+  const lineRegex = /`(\d+)`\s*•\s*⬛\s*•\s*`([^`]+)`\s*•\s*([^•]+)•\s*\*\*([^*]+)\*\*\s*•\s*_(.*?)_(?:\s*•\s*`([^`]*)`)?/;
+  const lines = input.split('\n');
+  let added = 0;
+  let skipped = 0;
+  let errors = 0;
+  const importedCards = [];
+
+  lines.forEach((line) => {
+    const cleanLine = line.trim();
+    if (!cleanLine) return;
+
+    const match = cleanLine.match(lineRegex);
+    if (match) {
+      const power = parseInt(match[1]);
+      const cardCode = match[2].trim(); // código de la carta como 95lqk
+      const emojiRareza = match[3].trim();
+      const charName = match[4].trim();
+      const seriesName = match[5].trim();
+
+      let animeIdx = animes.findIndex(a => a.name.toLowerCase() === seriesName.toLowerCase());
+      if (animeIdx === -1) {
+        animes.push({ name: seriesName, img: '', cards: [], createdAt: Date.now() });
+        animeIdx = animes.length - 1;
+      }
+
+      // Verificación segura de duplicados
+      const exists = animes[animeIdx].cards.some(c => c && c.name && c.name.toLowerCase() === charName.toLowerCase());
+
+      let rarity = 'bronze';
+      if (emojiRareza.includes('⚪')) rarity = 'silver';
+      else if (emojiRareza.includes('🟡')) rarity = 'gold';
+      else if (emojiRareza.includes('🔵')) rarity = 'diamond';
+      else if (emojiRareza.includes('🟣')) rarity = 'mythic';
+
+      importedCards.push({ name: charName, series: seriesName, rarity, power, status: exists ? 'dup' : 'new' });
+
+      if (!exists) {
+        animes[animeIdx].cards.push({
+          name: charName,
+          img: '', 
+          type: 'normal',
+          rarity: rarity,
+          shiny: false,
+          obtained: true,
+          power: power,
+          code: cardCode,
+          addedAt: Date.now()
+        });
+        added++;
+      } else {
+        skipped++;
+      }
+    } else {
+      errors++;
+    }
+  });
+
+  if (added > 0 || skipped > 0) {
+    save();
+
+    // Guardar historial detallado por anime
+    const histKey = 'acg_history';
+    let history = [];
+    try { history = JSON.parse(localStorage.getItem(histKey)) || []; } catch(e) {}
+    history.unshift({
+      date: Date.now(),
+      added,
+      skipped,
+      errors,
+      cards: importedCards  // array de {name, series, rarity, power, status}
+    });
+    if (history.length > 100) history = history.slice(0, 100); // máx 100 entradas
+    localStorage.setItem(histKey, JSON.stringify(history));
+
+    renderAnimes();
+    if(typeof updateHeroStats === 'function') updateHeroStats();
+    inputEl.value = '';
+
+    let msg = '';
+    if (added > 0) msg += `✅ +${added} nueva${added>1?'s':''}`;
+    if (skipped > 0) msg += `${added>0?' · ':''}⚠️ ${skipped} ya existía${skipped>1?'n':''}`;
+    if (errors > 0) msg += ` · ❌ ${errors} sin formato`;
+    const hasWarning = skipped > 0 || errors > 0;
+    toast(msg, hasWarning ? 'var(--gold)' : 'var(--green)', hasWarning ? 4000 : 2800);
+  } else if (errors > 0) {
+    toast(`❌ Formato no reconocido (${errors} línea${errors>1?'s':''})`, '#e53935', 4000);
+  } else {
+    toast('⚠️ No se encontraron cartas', 'var(--gold)');
+  }
+}
+
+// ===== HISTORY =====
+function renderHistory() {
+  const el = document.getElementById('historyContent');
+  let history = [];
+  try { history = JSON.parse(localStorage.getItem('acg_history')) || []; } catch(e) {}
+
+  // Filtrar al anime actual
+  const animeName = animes[currentAnime]?.name?.toLowerCase();
+  const relevant = history.filter(h => h.cards && h.cards.some(c => c.series?.toLowerCase() === animeName));
+
+  if (!relevant.length) {
+    el.innerHTML = '<div class="empty">Sin historial de importaciones para este anime.<br><span style="font-size:12px;color:var(--text3);">Las importaciones futuras aparecerán aquí.</span></div>';
+    return;
+  }
+
+  const RARITY_COLORS = { bronze:'#cd7f32', silver:'#c0c0c0', gold:'#ffd700', diamond:'#00e5ff', mythic:'#c340ff', radiant:'#ff88ff' };
+
+  el.innerHTML = relevant.map((h, idx) => {
+    const d = new Date(h.date);
+    const dateStr = d.toLocaleDateString('es-CO', { day:'2-digit', month:'short', year:'numeric' });
+    const timeStr = d.toLocaleTimeString('es-CO', { hour:'2-digit', minute:'2-digit' });
+    const animeCards = h.cards.filter(c => c.series?.toLowerCase() === animeName);
+    const newOnes = animeCards.filter(c => c.status === 'new');
+    const dupOnes = animeCards.filter(c => c.status === 'dup');
+
+    return `<div class="stats-section" style="margin-bottom:10px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;flex-wrap:wrap;gap:6px;">
+        <div>
+          <span style="font-size:13px;font-weight:600;">📥 ${dateStr}</span>
+          <span style="font-size:11px;color:var(--text3);margin-left:6px;">${timeStr}</span>
+        </div>
+        <div style="display:flex;gap:6px;font-size:11px;">
+          ${newOnes.length ? `<span style="color:var(--green);background:#003a20;padding:2px 8px;border-radius:10px;border:1px solid var(--green)">+${newOnes.length} nuevas</span>` : ''}
+          ${dupOnes.length ? `<span style="color:var(--gold);background:#2e2000;padding:2px 8px;border-radius:10px;border:1px solid var(--gold)">${dupOnes.length} ya existían</span>` : ''}
+        </div>
+      </div>
+      ${animeCards.map(c => `
+        <div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid var(--border);font-size:12px;">
+          <span style="width:8px;height:8px;border-radius:50%;background:${c.status==='new'?'var(--green)':'var(--gold)'};flex-shrink:0;"></span>
+          <span style="flex:1;font-weight:${c.status==='new'?'600':'400'};color:${c.status==='dup'?'var(--text2)':'var(--text)'};">${c.name}</span>
+          <span class="rbd ${c.rarity}">${RARITY_LABELS[c.rarity]||c.rarity}</span>
+          <span style="color:var(--text3);min-width:30px;text-align:right;">${c.power}</span>
+          ${c.status==='dup'?'<span style="color:var(--text3);font-size:10px;">dup</span>':''}
+        </div>`).join('')}
+    </div>`;
+  }).join('');
+}
+
+
+// ===== COPY CODE =====
+function copyCode(code, btn) {
+  if (!code) return;
+  navigator.clipboard.writeText(`fv ${code}`).then(() => {
+    const orig = btn.textContent;
+    btn.textContent = '✅';
+    btn.style.color = 'var(--green)';
+    setTimeout(() => { btn.textContent = orig; btn.style.color = ''; }, 1200);
+    toast(`📋 Copiado: fv ${code}`, 'var(--cyan)', 2000);
+  }).catch(() => {
+    const ta = document.createElement('textarea');
+    ta.value = `fv ${code}`; ta.style.position = 'fixed'; ta.style.opacity = '0';
+    document.body.appendChild(ta); ta.select();
+    document.execCommand('copy'); document.body.removeChild(ta);
+    toast(`📋 Copiado: fv ${code}`, 'var(--cyan)', 2000);
+  });
+}
+function copyTag(tag, btn) {
+  if (!tag) return;
+  navigator.clipboard.writeText(`ft ${tag}`).then(() => {
+    const orig = btn.textContent;
+    btn.textContent = '✅';
+    btn.style.color = 'var(--green)';
+    setTimeout(() => { btn.textContent = orig; btn.style.color = ''; }, 1200);
+    toast(`📋 Copiado: ft ${tag}`, 'var(--cyan)', 2000);
+  }).catch(() => {
+    const ta = document.createElement('textarea');
+    ta.value = `ft ${tag}`; ta.style.position = 'fixed'; ta.style.opacity = '0';
+    document.body.appendChild(ta); ta.select();
+    document.execCommand('copy'); document.body.removeChild(ta);
+    toast(`📋 Copiado: ft ${tag}`, 'var(--cyan)', 2000);
+  });
+}
+
+// ===== MODE CYCLE: Normal → Mejorado → PRO =====
+let currentMode = 'normal'; // 'normal' | 'improved' | 'pro'
+
+function cycleMode() {
+  const modes = ['normal','improved','pro'];
+  currentMode = modes[(modes.indexOf(currentMode)+1) % modes.length];
+  applyMode();
+  localStorage.setItem('acg_mode', currentMode);
+}
+
+function applyMode() {
+  document.body.classList.remove('improved','pro');
+  const btn = document.getElementById('modeToggleBtn');
+  btn.classList.remove('pro-active');
+  btn.style.background = btn.style.borderColor = btn.style.color = btn.style.boxShadow = '';
+
+  if (currentMode === 'improved') {
+    document.body.classList.add('improved');
+    btn.textContent = '🔥 Modo PRO';
+    btn.style.background = 'linear-gradient(135deg,#7c3aed,#c026d3)';
+    btn.style.borderColor = '#c026d3';
+    btn.style.color = '#fff';
+  } else if (currentMode === 'pro') {
+    document.body.classList.add('pro');
+    btn.textContent = '◀ Normal';
+    btn.classList.add('pro-active');
+    renderProQuickPanel();
+  } else {
+    btn.textContent = '✨ Mejorado';
+  }
+}
+
+function renderProQuickPanel() {
+  const panel = document.getElementById('proQuickInner');
+  if (!panel) return;
+  let tc=0,to=0,ts=0,bestAnime=null,bestPct=0;
+  animes.forEach((a,i) => {
+    const total = a.cards.filter(c=>c).length;
+    const done = a.cards.filter(c=>c&&c.obtained).length;
+    const pct = total ? done/total : 0;
+    tc += total; to += done;
+    a.cards.forEach(c=>{ if(c&&c.shiny&&c.obtained) ts++; });
+    if (pct > bestPct) { bestPct = pct; bestAnime = a.name; }
+  });
+  const topPower = animes.flatMap(a=>a.cards.filter(c=>c&&c.obtained)).sort((a,b)=>b.power-a.power)[0];
+  const rarityIcons = { radiant:'✨', mythic:'🟣', diamond:'💎', gold:'🟡', silver:'⚪', bronze:'🟤' };
+  const topRarity = animes.flatMap(a=>a.cards.filter(c=>c&&c.obtained)).sort((a,b)=>(RARITY_RANK[b.rarity]||0)-(RARITY_RANK[a.rarity]||0))[0];
+
+  panel.innerHTML = `
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;flex-wrap:wrap;gap:8px;">
+      <span style="font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:11px;letter-spacing:0.1em;text-transform:uppercase;background:linear-gradient(135deg,#7000ff,#ff007a);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">⚡ PRO Dashboard</span>
+      <span style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--text3);">${new Date().toLocaleString('es-CO',{dateStyle:'medium',timeStyle:'short'})}</span>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(100px,1fr));gap:8px;">
+      <div style="background:rgba(112,0,255,0.08);border:1px solid rgba(112,0,255,0.2);border-radius:10px;padding:8px;text-align:center;">
+        <div style="font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:1.4rem;background:linear-gradient(135deg,#7000ff,#00ffff);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">${tc}</div>
+        <div style="font-size:9px;letter-spacing:0.06em;text-transform:uppercase;color:var(--text3);">Cartas</div>
+      </div>
+      <div style="background:rgba(0,255,136,0.06);border:1px solid rgba(0,255,136,0.15);border-radius:10px;padding:8px;text-align:center;">
+        <div style="font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:1.4rem;background:linear-gradient(135deg,#00ff88,#00ccaa);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">${tc?Math.round(to/tc*100):0}%</div>
+        <div style="font-size:9px;letter-spacing:0.06em;text-transform:uppercase;color:var(--text3);">Global</div>
+      </div>
+      <div style="background:rgba(255,204,0,0.06);border:1px solid rgba(255,204,0,0.15);border-radius:10px;padding:8px;text-align:center;">
+        <div style="font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:1.4rem;background:linear-gradient(135deg,#ffcc00,#ff7700);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">${ts}</div>
+        <div style="font-size:9px;letter-spacing:0.06em;text-transform:uppercase;color:var(--text3);">Shiny ✨</div>
+      </div>
+      <div style="background:rgba(191,0,255,0.06);border:1px solid rgba(191,0,255,0.15);border-radius:10px;padding:8px;text-align:center;">
+        <div style="font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:1.4rem;background:linear-gradient(135deg,#bf00ff,#7000ff);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">${animes.length}</div>
+        <div style="font-size:9px;letter-spacing:0.06em;text-transform:uppercase;color:var(--text3);">Animes</div>
+      </div>
+    </div>
+    ${topPower || bestAnime ? `<div style="margin-top:10px;display:flex;flex-wrap:wrap;gap:6px;font-size:11px;font-family:'Space Grotesk',sans-serif;">
+      ${topPower?`<span style="background:rgba(112,0,255,0.1);border:1px solid rgba(112,0,255,0.25);border-radius:8px;padding:3px 10px;color:#c080ff;">💪 ${topPower.name} · <b>${topPower.power}</b> PWR</span>`:''}
+      ${topRarity?`<span style="background:rgba(191,0,255,0.08);border:1px solid rgba(191,0,255,0.2);border-radius:8px;padding:3px 10px;color:#bf00ff;">${rarityIcons[topRarity.rarity]||''} ${topRarity.name}</span>`:''}
+      ${bestAnime?`<span style="background:rgba(0,255,136,0.06);border:1px solid rgba(0,255,136,0.15);border-radius:8px;padding:3px 10px;color:#00ff88;">🏆 ${bestAnime} · ${Math.round(bestPct*100)}%</span>`:''}
+    </div>` : ''}`;
+}
+
+// Keep old function name for compatibility
+function toggleImprovedMode() { cycleMode(); }
+document.addEventListener('keydown', e => {
+  if (e.key==='Escape') {
+    document.getElementById('cardModal').style.display='none';
+    document.getElementById('animeFormModal').style.display='none';
+    document.querySelectorAll('.confirm-overlay').forEach(d=>d.remove());
+  }
+});
+
+// ===== START =====
+init();
+</script>
+</body>
+</html>
