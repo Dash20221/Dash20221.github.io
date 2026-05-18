@@ -1,10 +1,9 @@
 <!DOCTYPE html>
-<!DOCTYPE html>
 <html lang="es">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>🎴 Anime Cards Game v7</title>
+<title>🎴 Anime Cards Game v8</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;}
 :root{
@@ -106,8 +105,7 @@ label{font-size:12px;color:var(--text2);display:flex;align-items:center;gap:5px;
 .card.not-obtained{opacity:.7;}
 @keyframes shimmer{from{box-shadow:0 0 8px rgba(255,215,0,.3);}to{box-shadow:0 0 22px rgba(255,215,0,.7),0 0 35px rgba(255,200,0,.3);}}
 .card img{width:100%;aspect-ratio:1;object-fit:cover;display:block;background:var(--bg3);}
-.card.poster-card img{aspect-ratio:2/3;}
-.card.poster-card{width:130px;}
+.card.poster-card img{aspect-ratio:2/3;object-fit:contain;}
 .card img.gray{filter:grayscale(100%) brightness(.55);}
 .card .card-body{padding:8px;}
 .card .card-name{font-size:12px;font-weight:600;margin-bottom:4px;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
@@ -205,7 +203,39 @@ label{font-size:12px;color:var(--text2);display:flex;align-items:center;gap:5px;
 .cli-meta{font-size:11px;color:var(--text2);margin-top:2px;}
 .cli-actions{display:flex;gap:4px;flex-shrink:0;}
 
-/* ---- RESPONSIVE ---- */
+/* ---- WISHLIST / PRIORITY ---- */
+.card.wishlist { box-shadow: 0 0 14px rgba(255,165,0,.5); border-color: #ff9800 !important; }
+.wish-badge { position:absolute;top:5px;left:5px;background:#ff9800;color:#000;font-size:9px;font-weight:700;border-radius:4px;padding:1px 5px;z-index:2; }
+/* ---- BULK SELECT ---- */
+.card.bulk-selected { outline: 2px solid var(--cyan); outline-offset: 2px; }
+.bulk-bar { display:none;position:sticky;bottom:0;z-index:50;background:var(--bg2);border-top:1px solid var(--cyan);padding:8px 12px;align-items:center;gap:10px;flex-wrap:wrap; }
+.bulk-bar.visible { display:flex; }
+/* ---- NOTES ---- */
+.card-note { font-size:10px;color:var(--text3);text-align:center;margin-top:3px;font-style:italic;white-space:nowrap;overflow:hidden;text-overflow:ellipsis; }
+/* ---- GLOBAL SEARCH MODAL ---- */
+#globalSearchModal .modal { max-width:600px; }
+#globalSearchResults { max-height:60vh;overflow-y:auto; }
+.gsr-item { display:flex;align-items:center;gap:10px;padding:8px 10px;border-bottom:1px solid var(--border);cursor:pointer;transition:background .15s; }
+.gsr-item:hover { background:var(--bg3); }
+.gsr-img { width:36px;height:36px;border-radius:6px;object-fit:cover;background:var(--bg3);flex-shrink:0; }
+.gsr-info { flex:1;min-width:0; }
+.gsr-name { font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis; }
+.gsr-meta { font-size:11px;color:var(--text2); }
+/* ---- RANKING ---- */
+.rank-item { display:flex;align-items:center;gap:10px;padding:7px 10px;border-bottom:1px solid var(--border);font-size:12px; }
+.rank-num { width:22px;text-align:center;font-weight:700;color:var(--text3);font-size:11px; }
+.rank-img { width:32px;height:32px;border-radius:5px;object-fit:cover;background:var(--bg3); }
+.rank-name { flex:1;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis; }
+.rank-pwr { font-size:11px;font-weight:700; }
+/* ---- COLLECTOR LEVEL ---- */
+.collector-level { display:flex;align-items:center;gap:8px;background:var(--bg3);border:1px solid var(--border2);border-radius:10px;padding:8px 14px;margin-top:8px; }
+.cl-icon { font-size:1.4rem; }
+.cl-info { flex:1; }
+.cl-title { font-size:12px;font-weight:700; }
+.cl-sub { font-size:10px;color:var(--text2); }
+/* ---- DUPLICATE BADGE ---- */
+.dup-badge { position:absolute;top:5px;left:5px;background:#e53935;color:#fff;font-size:9px;font-weight:700;border-radius:4px;padding:1px 5px;z-index:2; }
+
 @media(max-width:600px){
   .anime-grid{grid-template-columns:repeat(2,1fr);}
   .card{width:calc(50vw - 22px);}
@@ -884,7 +914,7 @@ body.pro input[type=checkbox] { accent-color: #7000ff; }
 body.pro .card .pbar .pfill[style] { background: linear-gradient(90deg, #7000ff, #ff007a) !important; }
 
 /* PRO QUICK STATS PANEL — shown only in PRO on main page */
-body.pro #proQuickPanel {
+body.pro #proQuickPanel, body.deluxe #proQuickPanel {
   display: block !important;
   background: rgba(7,7,26,0.7);
   border: 1px solid rgba(112,0,255,0.15);
@@ -930,6 +960,342 @@ body.pro #historyContent .stats-section { background: rgba(7,7,26,0.85); }
 /* Smooth transitions for PRO */
 body.pro .card, body.pro .anime-card, body.pro .btn, body.pro .tab,
 body.pro .filter-chip, body.pro .card-list-item { transition-timing-function: cubic-bezier(.4,0,.2,1); }
+
+/* ====================================================
+   💎 MODO DELUXE — Lujo dorado / cristal oscuro
+   ==================================================== */
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700;800&family=Inter:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap');
+
+body.deluxe {
+  --bg:#080608;--bg2:#0f0c10;--bg3:#17131a;--bg4:#211c26;
+  --border:#2c2030;--border2:#3d2f45;
+  --text:#f5f0e8;--text2:#a89880;--text3:#6b5545;
+  --cyan:#d4af37;--gold:#ffd700;--green:#50c878;--red:#c0392b;--purple:#9b59b6;
+  --dlx-gold:#d4af37;--dlx-gold2:#f5d376;--dlx-dark:#080608;
+  --radius:16px;--radius-sm:10px;
+  background: #080608;
+  font-family: 'Inter', sans-serif;
+  overflow-x: hidden;
+}
+
+/* Subtle golden grain texture */
+body.deluxe::before {
+  content:'';
+  position:fixed;inset:0;
+  background:
+    radial-gradient(ellipse 80% 50% at 50% 0%, rgba(212,175,55,0.07) 0%, transparent 60%),
+    radial-gradient(ellipse 60% 40% at 0% 100%, rgba(212,175,55,0.04) 0%, transparent 50%),
+    radial-gradient(ellipse 40% 40% at 100% 50%, rgba(212,175,55,0.04) 0%, transparent 50%);
+  pointer-events:none;z-index:0;
+}
+
+body.deluxe #app, body.deluxe .topbar, body.deluxe .modal, body.deluxe .confirm-box { position:relative;z-index:1; }
+
+/* DELUXE TOPBAR */
+body.deluxe .topbar {
+  background: linear-gradient(180deg, rgba(15,12,16,0.98), rgba(8,6,8,0.98));
+  border-bottom: 1px solid rgba(212,175,55,0.25);
+  box-shadow: 0 1px 0 rgba(212,175,55,0.1), 0 4px 30px rgba(0,0,0,0.6);
+  backdrop-filter: blur(16px);
+}
+body.deluxe .topbar h1 {
+  font-family: 'Playfair Display', serif;
+  font-weight: 800;
+  font-size: 1.3rem;
+  letter-spacing: 0.02em;
+  background: linear-gradient(135deg, #d4af37 0%, #f5d376 40%, #d4af37 60%, #b8860b 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* DELUXE BUTTONS */
+body.deluxe .btn {
+  font-family: 'Inter', sans-serif;
+  font-weight: 600;
+  font-size: 12px;
+  letter-spacing: 0.02em;
+  border-radius: 10px;
+  transition: all .2s ease;
+}
+body.deluxe .btn-primary {
+  background: linear-gradient(135deg, rgba(212,175,55,0.15), rgba(212,175,55,0.08));
+  border-color: rgba(212,175,55,0.5);
+  color: #d4af37;
+  box-shadow: 0 0 12px rgba(212,175,55,0.08), inset 0 1px 0 rgba(255,255,255,0.05);
+}
+body.deluxe .btn-primary:hover {
+  background: linear-gradient(135deg, rgba(212,175,55,0.25), rgba(212,175,55,0.15));
+  box-shadow: 0 0 20px rgba(212,175,55,0.2);
+  border-color: rgba(212,175,55,0.8);
+}
+body.deluxe .btn-success {
+  background: rgba(80,200,120,0.1);
+  border-color: rgba(80,200,120,0.4);
+  color: #50c878;
+}
+body.deluxe .btn-danger {
+  background: rgba(192,57,43,0.1);
+  border-color: rgba(192,57,43,0.4);
+  color: #e74c3c;
+}
+body.deluxe .btn:hover { transform: translateY(-1px); }
+
+/* DELUXE INPUTS */
+body.deluxe input[type=text],body.deluxe input[type=number],body.deluxe input[type=url],
+body.deluxe input[type=search],body.deluxe select,body.deluxe textarea {
+  background: rgba(15,12,16,0.9);
+  border-color: rgba(212,175,55,0.15);
+  color: var(--text);
+  font-family: 'Inter', sans-serif;
+  border-radius: 10px;
+}
+body.deluxe input:focus,body.deluxe select:focus,body.deluxe textarea:focus {
+  border-color: rgba(212,175,55,0.6);
+  box-shadow: 0 0 0 2px rgba(212,175,55,0.08);
+}
+body.deluxe #fCardCode { font-family: 'DM Mono', monospace !important; }
+body.deluxe #fAnimeTag { font-family: 'DM Mono', monospace !important; }
+
+/* DELUXE HERO STATS */
+body.deluxe .hero-card {
+  background: linear-gradient(145deg, rgba(15,12,16,0.95), rgba(23,19,26,0.95));
+  border: 1px solid rgba(212,175,55,0.15);
+  border-radius: 16px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.5), inset 0 1px 0 rgba(212,175,55,0.08);
+}
+body.deluxe .hero-card .num {
+  font-family: 'Playfair Display', serif;
+  background: linear-gradient(135deg, #d4af37, #f5d376);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip:text;
+}
+body.deluxe .hero-card .lbl { font-family: 'Inter', sans-serif; letter-spacing: 0.04em; text-transform: uppercase; font-size: 9px; }
+
+/* DELUXE PROGRESS */
+body.deluxe .pfill {
+  background: linear-gradient(90deg, #b8860b, #d4af37, #f5d376, #d4af37);
+  background-size: 200% 100%;
+  animation: dlxGold 3s linear infinite;
+}
+@keyframes dlxGold { 0%{background-position:0%}100%{background-position:200%} }
+
+/* DELUXE ANIME CARDS */
+body.deluxe .anime-card {
+  background: linear-gradient(170deg, rgba(15,12,16,0.97), rgba(23,19,26,0.97));
+  border: 1px solid rgba(212,175,55,0.12);
+  border-radius: 18px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.5), inset 0 1px 0 rgba(212,175,55,0.06);
+  transition: transform .3s cubic-bezier(.4,0,.2,1), box-shadow .3s, border-color .3s;
+  overflow: hidden;
+}
+body.deluxe .anime-card:hover {
+  transform: translateY(-6px);
+  border-color: rgba(212,175,55,0.4);
+  box-shadow: 0 16px 50px rgba(0,0,0,0.6), 0 0 0 1px rgba(212,175,55,0.15), 0 0 30px rgba(212,175,55,0.08);
+}
+body.deluxe .anime-card.completed {
+  border-color: rgba(80,200,120,0.4);
+  box-shadow: 0 4px 20px rgba(0,0,0,0.5), 0 0 20px rgba(80,200,120,0.1);
+}
+body.deluxe .anime-card .ac-name { font-family: 'Inter', sans-serif; font-weight: 700; }
+
+/* DELUXE CARDS */
+body.deluxe .card {
+  background: linear-gradient(170deg, rgba(15,12,16,0.99), rgba(8,6,8,0.99));
+  border: 1px solid rgba(212,175,55,0.1);
+  border-radius: 18px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.6), inset 0 1px 0 rgba(212,175,55,0.05);
+  transition: transform .3s cubic-bezier(.4,0,.2,1), box-shadow .3s;
+}
+body.deluxe .card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 16px 40px rgba(0,0,0,0.7), 0 0 0 1px rgba(212,175,55,0.2), 0 0 25px rgba(212,175,55,0.07);
+  border-color: rgba(212,175,55,0.3);
+}
+body.deluxe .card.shiny {
+  border-color: rgba(255,215,0,0.6) !important;
+  box-shadow: 0 0 25px rgba(255,215,0,0.3), 0 0 60px rgba(212,175,55,0.1) !important;
+}
+body.deluxe .card.shiny::before {
+  content:'';position:absolute;inset:0;
+  background: linear-gradient(110deg, transparent 30%, rgba(255,220,100,0.06) 50%, transparent 70%);
+  animation: dlxShine 3s ease-in-out infinite;
+  pointer-events:none;z-index:1;border-radius:18px;
+}
+@keyframes dlxShine { 0%{transform:translateX(-100%)}100%{transform:translateX(200%)} }
+body.deluxe .card.wishlist { border-color: rgba(212,175,55,0.8) !important; box-shadow: 0 0 20px rgba(212,175,55,0.25) !important; }
+body.deluxe .card-name { font-family: 'Inter', sans-serif; font-weight: 700; }
+body.deluxe .pwr { font-family: 'DM Mono', monospace; font-size: 10px; }
+body.deluxe .obtained-badge { background: linear-gradient(135deg, #50c878, #2ecc71); color: #003; border-radius: 6px; }
+body.deluxe .new-badge { background: linear-gradient(135deg, #d4af37, #f5d376); color: #000; border-radius: 6px; }
+body.deluxe .wish-badge { background: linear-gradient(135deg, #d4af37, #b8860b); color: #000; border-radius: 6px; }
+
+/* DELUXE RARITY */
+body.deluxe .rbd.bronze { background: rgba(139,90,43,0.2); color: #cd7f32; border: 1px solid rgba(139,90,43,0.3); }
+body.deluxe .rbd.silver { background: rgba(180,180,180,0.1); color: #c8c8c8; border: 1px solid rgba(180,180,180,0.2); }
+body.deluxe .rbd.gold { background: rgba(212,175,55,0.15); color: #d4af37; border: 1px solid rgba(212,175,55,0.35); box-shadow: 0 0 8px rgba(212,175,55,0.15); }
+body.deluxe .rbd.diamond { background: rgba(180,230,255,0.08); color: #a8d8f0; border: 1px solid rgba(180,230,255,0.2); }
+body.deluxe .rbd.mythic { background: rgba(155,89,182,0.15); color: #c39bd3; border: 1px solid rgba(155,89,182,0.3); box-shadow: 0 0 8px rgba(155,89,182,0.2); }
+body.deluxe .rbd.radiant {
+  background: linear-gradient(135deg, rgba(212,175,55,0.12), rgba(255,215,0,0.08));
+  color: #f5d376;
+  border: 1px solid rgba(212,175,55,0.5);
+  box-shadow: 0 0 12px rgba(212,175,55,0.3);
+  animation: dlxRadGlow 2s ease-in-out infinite alternate;
+}
+@keyframes dlxRadGlow {
+  from { box-shadow: 0 0 8px rgba(212,175,55,0.25); }
+  to { box-shadow: 0 0 18px rgba(212,175,55,0.6), 0 0 30px rgba(255,215,0,0.15); }
+}
+
+/* DELUXE TABS */
+body.deluxe .tabs { border-bottom-color: rgba(212,175,55,0.12); }
+body.deluxe .tab { font-family: 'Inter', sans-serif; font-weight: 600; font-size: 12px; letter-spacing: 0.04em; }
+body.deluxe .tab.active { color: #d4af37; border-bottom-color: #d4af37; }
+body.deluxe .tab:hover { color: #f5d376; }
+
+/* DELUXE TOOLBAR */
+body.deluxe .toolbar {
+  background: rgba(15,12,16,0.85);
+  border: 1px solid rgba(212,175,55,0.1);
+  border-radius: 14px;
+  backdrop-filter: blur(8px);
+}
+body.deluxe .filter-chip {
+  background: rgba(212,175,55,0.05);
+  border: 1px solid rgba(212,175,55,0.15);
+  border-radius: 20px;
+  font-family: 'Inter', sans-serif;
+  font-weight: 600;
+  font-size: 11px;
+  color: var(--text3);
+  transition: all .15s;
+}
+body.deluxe .filter-chip:hover { background: rgba(212,175,55,0.1); color: #d4af37; }
+body.deluxe .filter-chip.on { background: rgba(212,175,55,0.15); border-color: rgba(212,175,55,0.6); color: #d4af37; }
+
+/* DELUXE SECTION HEADERS */
+body.deluxe .section-head { border-bottom-color: rgba(212,175,55,0.1); }
+body.deluxe .section-head .sh-title {
+  font-family: 'Inter', sans-serif;
+  font-weight: 700;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #d4af37;
+}
+
+/* DELUXE MODAL */
+body.deluxe .modal {
+  background: linear-gradient(170deg, rgba(15,12,16,0.99), rgba(8,6,8,0.99));
+  border: 1px solid rgba(212,175,55,0.2);
+  border-radius: 20px;
+  box-shadow: 0 30px 80px rgba(0,0,0,0.9), 0 0 40px rgba(212,175,55,0.05);
+}
+body.deluxe .modal-name { font-family: 'Playfair Display', serif; font-weight: 700; }
+body.deluxe .modal-overlay { background: rgba(0,0,0,0.85); backdrop-filter: blur(4px); }
+
+/* DELUXE STATS */
+body.deluxe .stats-section {
+  background: rgba(15,12,16,0.9);
+  border: 1px solid rgba(212,175,55,0.1);
+  border-radius: 16px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.3), inset 0 1px 0 rgba(212,175,55,0.04);
+}
+body.deluxe .stats-section h4 {
+  font-family: 'Inter', sans-serif;
+  font-weight: 700;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #d4af37;
+}
+
+/* DELUXE BACK HEADER */
+body.deluxe .back-header { border-bottom-color: rgba(212,175,55,0.12); }
+body.deluxe .back-header h2 { font-family: 'Playfair Display', serif; font-weight: 700; letter-spacing: 0.01em; }
+
+/* DELUXE TOAST */
+body.deluxe .toast {
+  background: rgba(15,12,16,0.97);
+  border: 1px solid rgba(212,175,55,0.35);
+  box-shadow: 0 8px 30px rgba(0,0,0,0.5), 0 0 20px rgba(212,175,55,0.07);
+  font-family: 'Inter', sans-serif;
+  font-weight: 600;
+  border-radius: 14px;
+}
+
+/* DELUXE CONFIRM */
+body.deluxe .confirm-box {
+  background: rgba(15,12,16,0.99);
+  border: 1px solid rgba(212,175,55,0.25);
+  border-radius: 20px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.9);
+}
+
+/* DELUXE LIST VIEW */
+body.deluxe .card-list-item {
+  background: rgba(15,12,16,0.9);
+  border: 1px solid rgba(212,175,55,0.08);
+  border-radius: 12px;
+  transition: border-color .15s, box-shadow .15s;
+}
+body.deluxe .card-list-item:hover {
+  border-color: rgba(212,175,55,0.3);
+  box-shadow: 0 4px 16px rgba(212,175,55,0.07);
+}
+
+/* DELUXE CODE */
+body.deluxe .card-body [style*="font-family:monospace"] {
+  font-family: 'DM Mono', monospace !important;
+  color: rgba(212,175,55,0.7) !important;
+  background: rgba(212,175,55,0.06) !important;
+  border: 1px solid rgba(212,175,55,0.15) !important;
+  border-radius: 5px;
+}
+
+/* DELUXE QUICK PANEL */
+body.deluxe #proQuickPanel {
+  display: block !important;
+  background: rgba(15,12,16,0.7);
+  border: 1px solid rgba(212,175,55,0.15);
+  border-radius: 14px;
+  padding: 12px 16px;
+  margin: 10px 0;
+  backdrop-filter: blur(8px);
+}
+
+/* DELUXE COLLECTOR LEVEL */
+body.deluxe .collector-level {
+  background: linear-gradient(135deg, rgba(212,175,55,0.08), rgba(212,175,55,0.03));
+  border-color: rgba(212,175,55,0.2);
+}
+
+/* DELUXE PRO PANEL OVERRIDES */
+body.deluxe #modeToggleBtn.pro-active {
+  background: linear-gradient(135deg, #b8860b, #d4af37) !important;
+  border-color: #d4af37 !important;
+  color: #000 !important;
+  font-weight: 700;
+  box-shadow: 0 0 20px rgba(212,175,55,0.3) !important;
+}
+
+/* DELUXE POWER BAR */
+body.deluxe .pfill.mythic-bar { background: linear-gradient(90deg, #9b59b6, #c39bd3) !important; animation:none; }
+body.deluxe .pfill.cyan-bar { background: linear-gradient(90deg, #a8d8f0, #5dade2) !important; animation:none; }
+body.deluxe .pfill.gold-bar { background: linear-gradient(90deg, #b8860b, #d4af37) !important; animation:none; }
+body.deluxe .pfill.silver-bar { background: linear-gradient(90deg, #7f8c8d, #bdc3c7) !important; animation:none; }
+body.deluxe .pfill.bronze-bar { background: linear-gradient(90deg, #6d4c41, #a1887f) !important; animation:none; }
+
+/* DELUXE WISHLIST TAG */
+body.deluxe .card.wishlist { border-color: rgba(212,175,55,0.7) !important; box-shadow: 0 0 20px rgba(212,175,55,0.2) !important; }
+
+/* DELUXE GLOBAL SEARCH */
+body.deluxe .gsr-item:hover { background: rgba(212,175,55,0.05); }
+body.deluxe #globalSearchInput { background: rgba(8,6,8,0.9); border-color: rgba(212,175,55,0.2); }
+
+/* Smooth mode transitions */
+body.deluxe .card, body.deluxe .anime-card, body.deluxe .btn, body.deluxe .tab { transition-timing-function: cubic-bezier(.4,0,.2,1); }
 </style>
 </head>
 <body>
@@ -942,8 +1308,9 @@ body.pro .filter-chip, body.pro .card-list-item { transition-timing-function: cu
     <label class="btn btn-sm" style="cursor:pointer;display:inline-flex;align-items:center;">
       📥 Importar<input type="file" accept=".json" style="display:none" onchange="importData(event)">
     </label>
+    <button class="btn btn-sm" onclick="openGlobalSearch()" title="Búsqueda global">🔍</button>
+    <button class="btn btn-sm" onclick="openRanking()" title="Ranking global">🏆</button>
     <button id="modeToggleBtn" class="btn btn-sm btn-primary" onclick="cycleMode()">✨ Mejorado</button>
-    <button id="proToggleBtn" class="btn btn-sm" onclick="cycleMode()" style="display:none;">🔥 PRO</button>
   </div>
 </div>
 
@@ -952,6 +1319,7 @@ body.pro .filter-chip, body.pro .card-list-item { transition-timing-function: cu
 <!-- ====== MAIN PAGE ====== -->
 <div id="pgMain" class="page active">
   <div id="heroStats" class="hero-stats" style="margin-top:10px;"></div>
+  <div class="collector-level" id="collectorLevel" style="margin-bottom:8px;"></div>
   <div id="proQuickPanel">
     <div id="proQuickInner"></div>
   </div>
@@ -1034,6 +1402,9 @@ body.pro .filter-chip, body.pro .card-list-item { transition-timing-function: cu
         <span class="filter-chip" id="chipMissing" onclick="toggleChip('missing')">❌ Faltantes</span>
         <span class="filter-chip" id="chipShiny" onclick="toggleChip('shiny')">✨ Shiny</span>
         <span class="filter-chip" id="chipObtained" onclick="toggleChip('obtained')">✅ Obtenidas</span>
+        <span class="filter-chip" id="chipWishlist" onclick="toggleChip('wishlist')">⭐ Wishlist</span>
+        <span class="filter-chip" id="chipDups" onclick="toggleChip('dups')">⚠️ Dups</span>
+        <button class="btn btn-sm" id="bulkModeBtn" onclick="toggleBulkMode()" title="Selección múltiple" style="padding:3px 8px;">☑ Bulk</button>
       </div>
       <select id="flRarity" onchange="renderCards()" style="font-size:11px;">
         <option value="">Toda rareza</option>
@@ -1114,6 +1485,10 @@ body.pro .filter-chip, body.pro .card-list-item { transition-timing-function: cu
           <label>Código de carta</label>
           <input type="text" id="fCardCode" placeholder="Ej: a3ee2" maxlength="20" style="font-family:monospace;">
         </div>
+        <div class="form-group" style="grid-column:1/-1;">
+          <label>Nota personal</label>
+          <input type="text" id="fCardNote" placeholder="Ej: conseguida en drop de evento..." maxlength="80">
+        </div>
         <div class="form-group" style="justify-content:flex-end;gap:8px;padding-top:18px;">
           <label><input type="checkbox" id="fCardShiny"> ✨ Shiny</label>
           <label><input type="checkbox" id="fCardObtained"> ✅ Obtenida</label>
@@ -1150,6 +1525,49 @@ body.pro .filter-chip, body.pro .card-list-item { transition-timing-function: cu
 </div>
 
 </div><!-- #app -->
+
+<!-- BULK BAR -->
+<div class="bulk-bar" id="bulkBar">
+  <span id="bulkCount" style="font-size:12px;color:var(--text2);">0 seleccionadas</span>
+  <button class="btn btn-sm btn-success" onclick="bulkMarkObtained()">✅ Obtenidas</button>
+  <button class="btn btn-sm" onclick="bulkMarkWishlist()">⭐ Wishlist</button>
+  <button class="btn btn-sm btn-danger" onclick="bulkDelete()">🗑 Eliminar</button>
+  <button class="btn btn-sm" onclick="clearBulkSelection()">✖ Limpiar</button>
+</div>
+
+<!-- GLOBAL SEARCH MODAL -->
+<div id="globalSearchModal" class="modal-overlay" style="display:none;" onclick="if(event.target===this)this.style.display='none'">
+  <div class="modal" style="max-width:580px;width:100%;" onclick="event.stopPropagation()">
+    <div class="modal-body">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
+        <input type="search" id="globalSearchInput" placeholder="🔍 Buscar en toda la colección..." style="flex:1;font-size:14px;" oninput="renderGlobalSearch()">
+        <button class="btn btn-sm" onclick="document.getElementById('globalSearchModal').style.display='none'">✖</button>
+      </div>
+      <div id="globalSearchResults" style="max-height:60vh;overflow-y:auto;"></div>
+    </div>
+  </div>
+</div>
+
+<!-- RANKING MODAL -->
+<div id="rankingModal" class="modal-overlay" style="display:none;" onclick="if(event.target===this)this.style.display='none'">
+  <div class="modal" style="max-width:500px;width:100%;" onclick="event.stopPropagation()">
+    <div class="modal-body">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
+        <span style="font-size:1rem;font-weight:700;flex:1;">🏆 Ranking Global de Poder</span>
+        <select id="rankFilter" onchange="renderRanking()" style="font-size:11px;">
+          <option value="all">Todas</option>
+          <option value="obtained">Solo obtenidas</option>
+          <option value="radiant">Radiant</option>
+          <option value="mythic">Mythic</option>
+          <option value="diamond">Diamond</option>
+        </select>
+        <button class="btn btn-sm" onclick="document.getElementById('rankingModal').style.display='none'">✖</button>
+      </div>
+      <div id="rankingList" style="max-height:65vh;overflow-y:auto;"></div>
+    </div>
+  </div>
+</div>
+
 <div id="toastEl" class="toast"></div>
 
 <script>
@@ -1160,9 +1578,11 @@ let editingAnime = null;
 let editingCard = null;
 let dragSrc = null;
 let cardView = 'grid';
-let filters = { missing: false, shiny: false, obtained: false };
-let newCards = new Set(); // track recently added
-let lastEditedName = ''; // last edited card name for autocomplete
+let filters = { missing: false, shiny: false, obtained: false, wishlist: false, dups: false };
+let newCards = new Set();
+let lastEditedName = '';
+let bulkMode = false;
+let bulkSelected = new Set();
 const RARITY_RANK = { bronze:1, silver:2, gold:3, diamond:4, mythic:5, radiant:6 };
 const RARITY_LABELS = { bronze:'Bronce', silver:'Plata', gold:'Oro', diamond:'Diamante', mythic:'Mythic', radiant:'Radiant' };
 
@@ -1206,6 +1626,7 @@ function updateHeroStats() {
   let tc=0, to=0, ts=0, ta=animes.length;
   animes.forEach(a => a.cards.forEach(c => { if(!c) return; tc++; if(c.obtained) to++; if(c.shiny&&c.obtained) ts++; }));
   const pct = tc ? Math.round(to/tc*100) : 0;
+  const lvl = getCollectorLevel(tc, to, ts, ta);
   document.getElementById('heroStats').innerHTML = `
     <div class="hero-card c-cyan"><div class="num">${ta}</div><div class="lbl">Animes</div></div>
     <div class="hero-card c-cyan"><div class="num">${tc}</div><div class="lbl">Cartas totales</div></div>
@@ -1215,7 +1636,10 @@ function updateHeroStats() {
       <div class="lbl" style="text-align:left;margin-bottom:4px;">Progreso global — <b style="color:var(--cyan)">${pct}%</b></div>
       <div class="pbar"><div class="pfill" style="width:${pct}%"></div></div>
     </div>`;
-  if (currentMode === 'pro') renderProQuickPanel();
+  // Collector level card
+  const clEl = document.getElementById('collectorLevel');
+  if (clEl) clEl.innerHTML = `<span class="cl-icon">${lvl.icon}</span><div class="cl-info"><div class="cl-title">${lvl.title}</div><div class="cl-sub">${lvl.sub} · ${tc} cartas · ${ta} series</div></div>`;
+  if (currentMode === 'pro' || currentMode === 'deluxe') renderProQuickPanel();
 }
 
 // ===== ANIME FORM =====
@@ -1288,13 +1712,17 @@ function renderAnimes() {
     const done = animes[i].cards.filter(c=>c&&c.obtained).length;
     const pct = total ? Math.round(done/total*100) : 0;
     const isComplete = total > 0 && done === total;
+    const wishCount = animes[i].cards.filter(c=>c&&c.wishlist&&!c.obtained).length;
+    const lastCard = animes[i].cards.filter(c=>c&&c.addedAt).sort((a,b)=>b.addedAt-a.addedAt)[0];
+    const lastAct = lastCard ? timeAgo(lastCard.addedAt) : null;
     const div = document.createElement('div');
     div.className = 'anime-card' + (isComplete ? ' completed' : '');
     div.innerHTML = `
       <img src="${a.img||''}" onerror="this.src=''" alt="${a.name}" loading="lazy">
       <div class="ac-body">
         <div class="ac-name" title="${a.name}">${a.name}</div>
-        <div class="ac-prog">${done}/${total} cartas · ${pct}%</div>
+        <div class="ac-prog">${done}/${total} cartas · ${pct}%${wishCount?` · ⭐${wishCount}`:''}</div>
+        ${lastAct?`<div style="font-size:10px;color:var(--text3);margin-bottom:2px;">🕐 ${lastAct}</div>`:''}
         <div class="pbar"><div class="pfill" style="width:${pct}%"></div></div>
         <div class="ac-actions">
           <button class="btn btn-sm btn-icon" onclick="event.stopPropagation();openAnimeForm(${i})">✏️</button>
@@ -1317,8 +1745,8 @@ function animeProgress(i) {
 // ===== OPEN ANIME =====
 function openAnime(i) {
   currentAnime = i;
-  filters = { missing: false, shiny: false, obtained: false };
-  ['chipMissing','chipShiny','chipObtained'].forEach(id => document.getElementById(id).classList.remove('on'));
+  filters = { missing: false, shiny: false, obtained: false, wishlist: false, dups: false };
+  ['chipMissing','chipShiny','chipObtained','chipWishlist','chipDups'].forEach(id => { const el=document.getElementById(id); if(el) el.classList.remove('on'); });
   document.getElementById('flRarity').value = '';
   document.getElementById('flType').value = '';
   document.getElementById('sortCards').value = 'default';
@@ -1344,7 +1772,8 @@ function toggleChip(key) {
   filters[key] = !filters[key];
   if (key === 'missing' && filters.missing) { filters.obtained = false; document.getElementById('chipObtained').classList.remove('on'); }
   if (key === 'obtained' && filters.obtained) { filters.missing = false; document.getElementById('chipMissing').classList.remove('on'); }
-  document.getElementById('chip' + key.charAt(0).toUpperCase() + key.slice(1)).classList.toggle('on', filters[key]);
+  const id = 'chip' + key.charAt(0).toUpperCase() + key.slice(1);
+  if (document.getElementById(id)) document.getElementById(id).classList.toggle('on', filters[key]);
   renderCards();
 }
 
@@ -1378,6 +1807,7 @@ function saveCard() {
     obtained: document.getElementById('fCardObtained').checked,
     power: Math.min(100, Math.max(1, parseInt(document.getElementById('fCardPower').value) || 1)),
     code: document.getElementById('fCardCode').value.trim() || '',
+    note: document.getElementById('fCardNote').value.trim() || '',
     addedAt: Date.now()
   };
   if (editingCard !== null) {
@@ -1405,7 +1835,7 @@ function cancelCard() {
 }
 
 function resetCardForm() {
-  ['fCardName','fCardImg','fCardPower','fCardCode'].forEach(id => document.getElementById(id).value = '');
+  ['fCardName','fCardImg','fCardPower','fCardCode','fCardNote'].forEach(id => document.getElementById(id).value = '');
   document.getElementById('fCardShiny').checked = false;
   document.getElementById('fCardObtained').checked = false;
   document.getElementById('cardImgPreview').style.display = 'none';
@@ -1422,6 +1852,7 @@ function editCard(i) {
   document.getElementById('fCardRarity').value = c.rarity;
   document.getElementById('fCardPower').value = c.power;
   document.getElementById('fCardCode').value = c.code || '';
+  document.getElementById('fCardNote').value = c.note || '';
   document.getElementById('fCardShiny').checked = c.shiny;
   document.getElementById('fCardObtained').checked = c.obtained;
   document.getElementById('cardFormTitle').textContent = `✏️ Editando: ${c.name}`;
@@ -1475,6 +1906,9 @@ function getFilteredCards(type) {
   const flR = document.getElementById('flRarity').value;
   const flT = document.getElementById('flType').value;
   const sort = document.getElementById('sortCards').value;
+  // Build name counts for dup detection
+  const nameCounts = {};
+  animes[currentAnime].cards.forEach(c => { if(c&&c.name) nameCounts[c.name.toLowerCase()] = (nameCounts[c.name.toLowerCase()]||0)+1; });
   let arr = animes[currentAnime].cards.map((c,i) => ({...c, _i:i})).filter(c => {
     if (!c||!c.name) return false;
     if (type && c.type !== type) return false;
@@ -1483,6 +1917,8 @@ function getFilteredCards(type) {
     if (filters.missing && c.obtained) return false;
     if (filters.shiny && !c.shiny) return false;
     if (filters.obtained && !c.obtained) return false;
+    if (filters.wishlist && !c.wishlist) return false;
+    if (filters.dups && (nameCounts[c.name.toLowerCase()]||0) < 2) return false;
     if (flR && c.rarity !== flR) return false;
     return true;
   });
@@ -1555,12 +1991,21 @@ function renderCards() {
 
 function makeCardEl(c) {
   const i = c._i;
+  const nameCounts = {};
+  animes[currentAnime].cards.forEach(x => { if(x&&x.name) nameCounts[x.name.toLowerCase()]=(nameCounts[x.name.toLowerCase()]||0)+1; });
+  const isDup = (nameCounts[c.name.toLowerCase()]||0) > 1;
   const div = document.createElement('div');
-  div.className = 'card' + (c.type==='poster'?' poster-card':'') + (c.shiny?' shiny':'') + (c.obtained?'':' not-obtained');
-  div.draggable = true;
+  div.className = 'card' + (c.type==='poster'?' poster-card':'') + (c.shiny?' shiny':'') + (c.obtained?'':' not-obtained') + (c.wishlist?' wishlist':'') + (bulkSelected.has(i)?' bulk-selected':'');
+  div.draggable = !bulkMode;
   div.dataset.index = i;
+  if (bulkMode) {
+    div.style.cursor = 'pointer';
+    div.onclick = () => toggleBulkCard(i, div);
+  }
   div.innerHTML = `
     ${c.obtained?'<span class="obtained-badge">✓</span>':''}
+    ${c.wishlist&&!c.obtained?'<span class="wish-badge">⭐</span>':''}
+    ${isDup?'<span class="dup-badge">DUP</span>':''}
     <img src="${c.img||''}" class="${c.obtained?'':'gray'}" onerror="this.src=''" loading="lazy" alt="${c.name}">
     <div class="card-body">
       <div class="card-name" title="${c.name}">${c.name}</div>
@@ -1569,23 +2014,25 @@ function makeCardEl(c) {
         <span class="rbd ${c.rarity}">${RARITY_LABELS[c.rarity]||c.rarity}${c.shiny?' ✨':''}</span>
       </div>
       ${c.code ? `<div style="text-align:center;margin-bottom:3px;"><span style="font-family:monospace;font-size:9px;color:var(--text3);background:var(--bg4);border:1px solid var(--border);border-radius:4px;padding:1px 5px;">${c.code}</span></div>` : ''}
+      ${c.note ? `<div class="card-note" title="${c.note}">📝 ${c.note}</div>` : ''}
       <div class="pwr">⚡ ${c.power}/100</div>
       <div class="pbar" style="margin-bottom:5px;"><div class="pfill ${pwrBarClass(c.power)}" style="width:${c.power}%;background:${pwrColor(c.power)};"></div></div>
-      <label style="justify-content:center;margin-bottom:4px;">
+      ${bulkMode ? '' : `<label style="justify-content:center;margin-bottom:4px;">
         <input type="checkbox" ${c.obtained?'checked':''} onchange="toggleObtained(${i})"> Obtenida
       </label>
       <div class="card-actions">
         <button class="btn btn-sm btn-icon" onclick="openCardModal(${i})">👁</button>
         <button class="btn btn-sm btn-icon" onclick="editCard(${i})">✏️</button>
-        ${c.code ? `<button class="btn btn-sm btn-icon" title="Copiar código: ${c.code}" onclick="copyCode('${c.code}',this)">📋</button>` : ''}
+        <button class="btn btn-sm btn-icon" title="${c.wishlist?'Quitar wishlist':'Agregar wishlist'}" onclick="toggleWishlist(${i})">${c.wishlist?'⭐':'☆'}</button>
+        ${c.code ? `<button class="btn btn-sm btn-icon" title="Copiar: fv ${c.code}" onclick="copyCode('${c.code}',this)">📋</button>` : ''}
         <button class="btn btn-sm btn-icon btn-danger" onclick="deleteCard(${i})">🗑</button>
       </div>
       <select class="card-move" onchange="moveCard(${i},this.value)">
         <option value="">Mover a...</option>
         ${animes.map((a,idx)=>idx!==currentAnime?`<option value="${idx}">${a.name}</option>`:'').join('')}
-      </select>
+      </select>`}
     </div>`;
-  addDrag(div);
+  if (!bulkMode) addDrag(div);
   return div;
 }
 
@@ -1619,13 +2066,14 @@ function openCardModal(i) {
   document.getElementById('cmImg').className = 'modal-img' + (c.obtained?'':' gray');
   document.getElementById('cmImg').style.filter = c.obtained ? '' : 'grayscale(100%) brightness(.5)';
   document.getElementById('cmImg').style.aspectRatio = c.type === 'poster' ? '2/3' : '1';
+  document.getElementById('cmImg').style.objectFit = c.type === 'poster' ? 'contain' : 'cover';
   document.getElementById('cmName').textContent = c.name + (c.shiny ? ' ✨' : '');
   document.getElementById('cmMeta').innerHTML = `
     <span class="rbd ${c.rarity}">${RARITY_LABELS[c.rarity]}</span>
     <span style="font-size:12px;color:var(--text2);">⚡ ${c.power}/100 · ${c.type}</span>
     ${c.obtained?'<span style="color:var(--green);font-size:12px;">✅ Obtenida</span>':'<span style="color:var(--red);font-size:12px;">❌ Faltante</span>'}
     ${c.code ? `<span style="font-family:monospace;font-size:11px;color:var(--cyan);background:var(--bg3);border:1px solid var(--border2);border-radius:6px;padding:2px 8px;cursor:pointer;" title="Copiar código" onclick="copyCode('${c.code}',this)">📋 ${c.code}</span>` : ''}`;
-  document.getElementById('cmPbar').innerHTML = `<div class="pbar"><div class="pfill" style="width:${c.power}%;background:${pwrColor(c.power)};"></div></div>`;
+  document.getElementById('cmPbar').innerHTML = `<div class="pbar"><div class="pfill" style="width:${c.power}%;background:${pwrColor(c.power)};"></div></div>${c.note?`<div style="font-size:11px;color:var(--text2);margin-top:6px;font-style:italic;">📝 ${c.note}</div>`:''}`;
   document.getElementById('cmActions').innerHTML = `
     <button class="btn btn-sm ${c.obtained?'btn-danger':'btn-success'}" onclick="toggleObtained(${i});closeCardModal()">
       ${c.obtained ? '↩ Marcar faltante' : '✅ Marcar obtenida'}
@@ -1953,21 +2401,21 @@ function copyTag(tag, btn) {
   });
 }
 
-// ===== MODE CYCLE: Normal → Mejorado → PRO =====
-let currentMode = 'normal'; // 'normal' | 'improved' | 'pro'
+// ===== MODE CYCLE: Normal → Mejorado → PRO → DELUXE =====
+let currentMode = 'normal';
 
 function cycleMode() {
-  const modes = ['normal','improved','pro'];
+  const modes = ['normal','improved','pro','deluxe'];
   currentMode = modes[(modes.indexOf(currentMode)+1) % modes.length];
   applyMode();
   localStorage.setItem('acg_mode', currentMode);
 }
 
 function applyMode() {
-  document.body.classList.remove('improved','pro');
+  document.body.classList.remove('improved','pro','deluxe');
   const btn = document.getElementById('modeToggleBtn');
   btn.classList.remove('pro-active');
-  btn.style.background = btn.style.borderColor = btn.style.color = btn.style.boxShadow = '';
+  btn.style.cssText = '';
 
   if (currentMode === 'improved') {
     document.body.classList.add('improved');
@@ -1977,8 +2425,16 @@ function applyMode() {
     btn.style.color = '#fff';
   } else if (currentMode === 'pro') {
     document.body.classList.add('pro');
-    btn.textContent = '◀ Normal';
+    btn.textContent = '💎 DELUXE';
     btn.classList.add('pro-active');
+    renderProQuickPanel();
+  } else if (currentMode === 'deluxe') {
+    document.body.classList.add('deluxe');
+    btn.textContent = '◀ Normal';
+    btn.style.background = 'linear-gradient(135deg,#b8860b,#d4af37)';
+    btn.style.borderColor = '#d4af37';
+    btn.style.color = '#000';
+    btn.style.fontWeight = '700';
     renderProQuickPanel();
   } else {
     btn.textContent = '✨ Mejorado';
@@ -2033,6 +2489,147 @@ function renderProQuickPanel() {
 
 // Keep old function name for compatibility
 function toggleImprovedMode() { cycleMode(); }
+
+// ===== TIME AGO =====
+function timeAgo(ts) {
+  const s = Math.floor((Date.now()-ts)/1000);
+  if (s < 60) return 'hace un momento';
+  if (s < 3600) return `hace ${Math.floor(s/60)}m`;
+  if (s < 86400) return `hace ${Math.floor(s/3600)}h`;
+  if (s < 604800) return `hace ${Math.floor(s/86400)}d`;
+  return new Date(ts).toLocaleDateString('es-CO',{day:'2-digit',month:'short'});
+}
+
+// ===== WISHLIST =====
+function toggleWishlist(i) {
+  animes[currentAnime].cards[i].wishlist = !animes[currentAnime].cards[i].wishlist;
+  save(); renderCards();
+  toast(animes[currentAnime].cards[i].wishlist ? '⭐ Agregada a wishlist' : '☆ Quitada de wishlist', 'var(--gold)', 1800);
+}
+
+// ===== BULK MODE =====
+function toggleBulkMode() {
+  bulkMode = !bulkMode;
+  bulkSelected.clear();
+  const btn = document.getElementById('bulkModeBtn');
+  btn.style.borderColor = bulkMode ? 'var(--cyan)' : '';
+  btn.style.color = bulkMode ? 'var(--cyan)' : '';
+  document.getElementById('bulkBar').classList.toggle('visible', bulkMode);
+  renderCards();
+}
+function toggleBulkCard(i, div) {
+  if (bulkSelected.has(i)) { bulkSelected.delete(i); div.classList.remove('bulk-selected'); }
+  else { bulkSelected.add(i); div.classList.add('bulk-selected'); }
+  document.getElementById('bulkCount').textContent = `${bulkSelected.size} seleccionada${bulkSelected.size!==1?'s':''}`;
+}
+function clearBulkSelection() { bulkSelected.clear(); renderCards(); document.getElementById('bulkCount').textContent = '0 seleccionadas'; }
+function bulkMarkObtained() {
+  if (!bulkSelected.size) return;
+  bulkSelected.forEach(i => { if(animes[currentAnime].cards[i]) animes[currentAnime].cards[i].obtained = true; });
+  save(); updateHeroStats(); clearBulkSelection();
+  toast(`✅ ${bulkSelected.size||'Varias'} marcadas como obtenidas`);
+}
+function bulkMarkWishlist() {
+  if (!bulkSelected.size) return;
+  bulkSelected.forEach(i => { if(animes[currentAnime].cards[i]) animes[currentAnime].cards[i].wishlist = true; });
+  save(); clearBulkSelection();
+  toast('⭐ Agregadas a wishlist', 'var(--gold)');
+}
+function bulkDelete() {
+  if (!bulkSelected.size) return;
+  confirm2(`¿Eliminar ${bulkSelected.size} carta${bulkSelected.size!==1?'s':''}?`, () => {
+    const toDelete = [...bulkSelected].sort((a,b)=>b-a);
+    toDelete.forEach(i => animes[currentAnime].cards.splice(i,1));
+    save(); updateHeroStats(); clearBulkSelection();
+    toast(`🗑 ${toDelete.length} carta${toDelete.length!==1?'s':''} eliminadas`, '#e53935');
+  });
+}
+
+// ===== GLOBAL SEARCH =====
+function openGlobalSearch() {
+  document.getElementById('globalSearchModal').style.display = 'flex';
+  document.getElementById('globalSearchInput').value = '';
+  document.getElementById('globalSearchResults').innerHTML = '<div class="empty">Escribe para buscar en toda tu colección...</div>';
+  setTimeout(() => document.getElementById('globalSearchInput').focus(), 50);
+}
+function renderGlobalSearch() {
+  const q = document.getElementById('globalSearchInput').value.toLowerCase().trim();
+  const cont = document.getElementById('globalSearchResults');
+  if (q.length < 2) { cont.innerHTML = '<div class="empty">Escribe al menos 2 caracteres...</div>'; return; }
+  const results = [];
+  animes.forEach((a, ai) => {
+    a.cards.forEach((c, ci) => {
+      if (!c||!c.name) return;
+      if (c.name.toLowerCase().includes(q) || (a.name.toLowerCase().includes(q))) {
+        results.push({ ...c, _ai: ai, _ci: ci, animeName: a.name, animeImg: a.img });
+      }
+    });
+  });
+  results.sort((a,b) => (RARITY_RANK[b.rarity]||0)-(RARITY_RANK[a.rarity]||0));
+  if (!results.length) { cont.innerHTML = '<div class="empty">Sin resultados</div>'; return; }
+  cont.innerHTML = '';
+  results.slice(0,50).forEach(c => {
+    const d = document.createElement('div');
+    d.className = 'gsr-item';
+    d.innerHTML = `
+      <img class="gsr-img ${c.obtained?'':'gray'}" src="${c.img||''}" onerror="this.src=''" alt="">
+      <div class="gsr-info">
+        <div class="gsr-name">${c.name}${c.shiny?' ✨':''}${c.wishlist?' ⭐':''}</div>
+        <div class="gsr-meta"><span class="rbd ${c.rarity}">${RARITY_LABELS[c.rarity]}</span> · ⚡${c.power} · ${c.animeName} · ${c.obtained?'<span style="color:var(--green)">✓</span>':'<span style="color:var(--text3)">Faltante</span>'}</div>
+      </div>
+      ${c.code?`<button class="btn btn-sm btn-icon" onclick="event.stopPropagation();copyCode('${c.code}',this)" title="fv ${c.code}">📋</button>`:''}`;
+    d.onclick = () => { document.getElementById('globalSearchModal').style.display='none'; openAnime(c._ai); };
+    cont.appendChild(d);
+  });
+  if (results.length > 50) cont.insertAdjacentHTML('beforeend', `<div class="empty" style="padding:8px;">... y ${results.length-50} más</div>`);
+}
+
+// ===== RANKING GLOBAL =====
+function openRanking() {
+  document.getElementById('rankingModal').style.display = 'flex';
+  renderRanking();
+}
+function renderRanking() {
+  const filter = document.getElementById('rankFilter').value;
+  let all = [];
+  animes.forEach((a, ai) => {
+    a.cards.forEach((c, ci) => {
+      if (!c||!c.name) return;
+      if (filter === 'obtained' && !c.obtained) return;
+      if (['radiant','mythic','diamond','gold','silver','bronze'].includes(filter) && c.rarity !== filter) return;
+      all.push({ ...c, _ai: ai, _ci: ci, animeName: a.name });
+    });
+  });
+  all.sort((a,b) => b.power - a.power);
+  const cont = document.getElementById('rankingList');
+  if (!all.length) { cont.innerHTML = '<div class="empty">Sin cartas</div>'; return; }
+  const medalColors = ['#ffd700','#c0c0c0','#cd7f32'];
+  cont.innerHTML = all.slice(0,100).map((c,idx) => `
+    <div class="rank-item">
+      <span class="rank-num" style="color:${idx<3?medalColors[idx]:'var(--text3)'};">${idx<3?['🥇','🥈','🥉'][idx]:idx+1}</span>
+      <img class="rank-img ${c.obtained?'':'gray'}" src="${c.img||''}" onerror="this.src=''" alt="">
+      <div style="flex:1;min-width:0;">
+        <div class="rank-name">${c.name}${c.shiny?' ✨':''}</div>
+        <div style="font-size:10px;color:var(--text2);"><span class="rbd ${c.rarity}">${RARITY_LABELS[c.rarity]}</span> · ${c.animeName}</div>
+      </div>
+      <span class="rank-pwr" style="color:${pwrColor(c.power)};">⚡${c.power}</span>
+      ${c.code?`<button class="btn btn-sm btn-icon" onclick="copyCode('${c.code}',this)" title="fv ${c.code}">📋</button>`:''}
+    </div>`).join('');
+}
+
+// ===== COLLECTOR LEVEL =====
+function getCollectorLevel(tc, to, ts, ta) {
+  const pct = tc ? to/tc : 0;
+  const score = to + ts*3 + ta*2 + Math.round(pct*50);
+  if (score >= 500) return { icon:'👑', title:'Coleccionista Legendario', sub:`Score: ${score}` };
+  if (score >= 300) return { icon:'💎', title:'Maestro Coleccionista', sub:`Score: ${score}` };
+  if (score >= 150) return { icon:'🏆', title:'Coleccionista Experto', sub:`Score: ${score}` };
+  if (score >= 75)  return { icon:'⭐', title:'Coleccionista Avanzado', sub:`Score: ${score}` };
+  if (score >= 30)  return { icon:'📚', title:'Coleccionista Intermedio', sub:`Score: ${score}` };
+  return { icon:'🌱', title:'Coleccionista Novato', sub:`Score: ${score}` };
+}
+
+
 document.addEventListener('keydown', e => {
   if (e.key==='Escape') {
     document.getElementById('cardModal').style.display='none';
@@ -2046,4 +2643,5 @@ init();
 </script>
 </body>
 </html>
+
 
