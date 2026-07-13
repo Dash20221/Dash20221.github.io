@@ -1,0 +1,1868 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Sofi Tracker</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --bg:#0a0a0f;--bg2:#10101a;--bg3:#161622;--bg4:#1c1c2e;
+  --border:#22223a;--border2:#2e2e4a;
+  --text:#e8e8f8;--text2:#7878a0;--text3:#40405a;
+  --accent:#f472b6;--accent2:#a78bfa;--accent3:#38bdf8;
+  --heart:#fb7185;--green:#6bcb77;--gold:#ffd93d;--teal:#2dd4bf;
+  --r:10px;--rs:6px;
+}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
+
+.topbar{display:flex;align-items:center;gap:10px;padding:10px 16px;background:var(--bg2);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:200;flex-wrap:wrap;}
+.topbar-logo{font-size:1.1rem;font-weight:700;background:linear-gradient(90deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;flex:1;white-space:nowrap;}
+.topbar-btns{display:flex;gap:6px;flex-wrap:wrap;}
+
+.btn{cursor:pointer;background:var(--bg3);color:var(--text);border:1px solid var(--border2);border-radius:var(--rs);padding:6px 12px;font-size:12px;transition:all .15s;white-space:nowrap;font-family:inherit;}
+.btn:hover{background:var(--bg4);}
+.btn-accent{background:#1a0028;border-color:var(--accent);color:var(--accent);}
+.btn-accent:hover{background:#280038;}
+.btn-danger{background:#1a0808;border-color:#e53935;color:#e53935;}
+.btn-danger:hover{background:#280f0f;}
+.btn-sm{padding:3px 8px;font-size:11px;}
+.btn-green{background:#0a1f0a;border-color:var(--green);color:var(--green);}
+.btn-purple{background:#100a28;border-color:var(--accent2);color:var(--accent2);}
+.code-chip{font-family:monospace;font-size:10px;background:var(--bg4);border:1px solid var(--border2);border-radius:4px;padding:1px 5px;color:var(--accent3);cursor:pointer;}
+.code-chip:hover{border-color:var(--accent3);}
+.gen-chip{font-size:9px;color:var(--text3);font-family:monospace;}
+.dup-row td{background:rgba(244,114,182,.04);border-top:2px dashed rgba(244,114,182,.2);}
+.dup-row td:first-child::before{content:'↻ ';color:var(--accent);font-size:10px;}
+.wishlist-slot{display:flex;align-items:center;gap:8px;padding:5px 8px;border-bottom:1px solid var(--border);font-size:12px;}
+.wishlist-slot.empty{color:var(--text3);font-style:italic;}
+.wishlist-num{font-size:10px;color:var(--text3);font-family:monospace;min-width:22px;}
+.btn-active{background:#1a0028;border-color:var(--accent);color:var(--accent);}
+.btn-ai{background:linear-gradient(135deg,#0a0a20,#1a0a28);border-color:var(--accent2);color:var(--accent2);}
+.btn-ai:hover{background:linear-gradient(135deg,#120f2e,#22103a);}
+
+/* AI CHAT */
+.ai-panel{position:fixed;right:0;top:0;bottom:0;width:360px;background:var(--bg2);border-left:1px solid var(--border2);display:flex;flex-direction:column;z-index:300;transform:translateX(100%);transition:transform .3s cubic-bezier(.4,0,.2,1);}
+.ai-panel.open{transform:translateX(0);}
+.ai-header{display:flex;align-items:center;gap:8px;padding:12px 14px;border-bottom:1px solid var(--border);background:var(--bg3);}
+.ai-header-title{flex:1;font-size:13px;font-weight:700;background:linear-gradient(90deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+.ai-messages{flex:1;overflow-y:auto;padding:12px;display:flex;flex-direction:column;gap:10px;}
+.ai-msg{max-width:88%;padding:8px 12px;border-radius:12px;font-size:12px;line-height:1.5;word-break:break-word;}
+.ai-msg.user{align-self:flex-end;background:#1a0028;border:1px solid rgba(244,114,182,.3);color:var(--text);border-bottom-right-radius:3px;}
+.ai-msg.ai{align-self:flex-start;background:var(--bg3);border:1px solid var(--border2);color:var(--text);border-bottom-left-radius:3px;}
+.ai-msg.ai b{color:var(--accent2);}
+.ai-msg.thinking{color:var(--text3);font-style:italic;}
+.ai-actions{display:flex;flex-wrap:wrap;gap:5px;padding:6px 12px;}
+.ai-action-btn{background:var(--bg3);border:1px solid var(--border2);border-radius:16px;padding:4px 10px;font-size:11px;cursor:pointer;color:var(--accent2);transition:all .15s;}
+.ai-action-btn:hover{border-color:var(--accent2);background:var(--bg4);}
+.ai-input-row{display:flex;gap:6px;padding:10px 12px;border-top:1px solid var(--border);background:var(--bg3);}
+.ai-input{flex:1;background:var(--bg4);border:1px solid var(--border2);border-radius:20px;padding:7px 12px;font-size:12px;color:var(--text);outline:none;resize:none;max-height:80px;font-family:inherit;}
+.ai-input:focus{border-color:var(--accent2);}
+.ai-send{background:#1a0a28;border:1px solid var(--accent2);border-radius:20px;color:var(--accent2);padding:7px 14px;font-size:12px;cursor:pointer;white-space:nowrap;}
+.ai-send:hover{background:#22103a;}
+.ai-send:disabled{opacity:.4;cursor:not-allowed;}
+.ai-overlay{position:fixed;inset:0;background:rgba(0,0,0,.3);z-index:299;display:none;}
+.ai-overlay.open{display:block;}
+/* key setup */
+.key-box{background:var(--bg3);border:1px solid var(--border2);border-radius:var(--r);padding:16px;margin:12px;}
+.key-box p{font-size:12px;color:var(--text2);margin-bottom:10px;line-height:1.5;}
+
+input,select,textarea{background:var(--bg3);color:var(--text);border:1px solid var(--border2);border-radius:var(--rs);padding:6px 10px;font-size:13px;outline:none;transition:border .15s,box-shadow .15s;font-family:inherit;}
+input:focus,select:focus,textarea:focus{border-color:var(--accent);box-shadow:0 0 0 2px rgba(244,114,182,.1);}
+textarea{resize:vertical;}
+label{font-size:12px;color:var(--text2);}
+
+/* HERO */
+.hero{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:8px;margin:12px 0;}
+.hcard{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:10px;text-align:center;}
+.hcard .n{font-size:1.5rem;font-weight:700;}
+.hcard .l{font-size:10px;color:var(--text2);margin-top:2px;}
+.hcard.ca .n{color:var(--accent);}
+.hcard.cb .n{color:var(--accent2);}
+.hcard.cc .n{color:var(--heart);}
+.hcard.cd .n{color:var(--green);}
+.hcard.ce .n{color:var(--gold);}
+
+.page{display:none;}.page.active{display:block;}
+
+/* SERIES GRID */
+.series-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(155px,1fr));gap:10px;margin-top:10px;}
+.serie-card{background:var(--bg2);border:1.5px solid var(--border);border-radius:var(--r);overflow:hidden;cursor:pointer;transition:transform .2s,border-color .2s,box-shadow .2s;}
+.serie-card:hover{transform:translateY(-3px);border-color:var(--border2);box-shadow:0 6px 20px rgba(244,114,182,.1);}
+.serie-card .sc-img{width:100%;aspect-ratio:1;background:linear-gradient(135deg,var(--bg3),var(--bg4));display:flex;align-items:center;justify-content:center;font-size:2.5rem;}
+.serie-card .sc-body{padding:8px;}
+.serie-card .sc-name{font-size:12px;font-weight:600;margin-bottom:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.serie-card .sc-count{font-size:11px;color:var(--text2);}
+.prog-bar{height:4px;background:var(--bg4);border-radius:2px;overflow:hidden;margin-top:4px;}
+.prog-fill{height:100%;background:linear-gradient(90deg,var(--accent),var(--accent2));border-radius:2px;transition:width .4s;}
+
+/* BACK BAR */
+.back-bar{display:flex;align-items:center;gap:6px;margin:8px 0 12px;padding-bottom:8px;border-bottom:1px solid var(--border);flex-wrap:wrap;}
+.back-bar h2{font-size:14px;}
+
+/* STATS ROW */
+.stats-row{display:flex;gap:12px;flex-wrap:wrap;font-size:12px;margin-bottom:10px;padding:8px 12px;background:var(--bg2);border-radius:var(--rs);border:1px solid var(--border);}
+.stats-row span{color:var(--text2);}
+.stats-row b{color:var(--text);}
+
+/* TOOLBAR */
+.toolbar{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-bottom:10px;padding:8px;background:var(--bg2);border-radius:var(--rs);border:1px solid var(--border);}
+.chip{background:var(--bg3);border:1px solid var(--border2);border-radius:20px;padding:3px 10px;font-size:11px;cursor:pointer;color:var(--text2);transition:all .15s;}
+.chip.on{border-color:var(--accent);color:var(--accent);}
+
+/* ===== CARD VIEW ===== */
+.cards-grid{display:flex;flex-wrap:wrap;gap:10px;}
+.kcard{width:150px;background:var(--bg2);border:1.5px solid var(--border);border-radius:var(--r);overflow:hidden;position:relative;transition:transform .2s,box-shadow .2s,border-color .2s;cursor:pointer;}
+.kcard:hover{transform:translateY(-3px);box-shadow:0 8px 24px rgba(0,0,0,.4);border-color:var(--border2);}
+.kcard-img{width:100%;aspect-ratio:1;background:linear-gradient(135deg,var(--bg3),var(--bg4));display:flex;align-items:center;justify-content:center;font-size:2.8rem;user-select:none;}
+.kcard .kb{padding:8px;}
+.kcard .knum{font-size:9px;color:var(--text3);font-family:monospace;text-align:center;margin-bottom:2px;}
+.kcard .kname{font-size:11px;font-weight:700;text-align:center;margin-bottom:5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.kcard .khearts{display:flex;align-items:center;justify-content:center;gap:3px;font-size:10px;color:var(--heart);font-weight:700;margin-bottom:4px;}
+.kcard .kprog{padding:0 2px 2px;}
+.kcard .kprog-txt{font-size:9px;color:var(--text3);text-align:center;margin-bottom:2px;}
+.kcard .kactions{display:flex;gap:3px;justify-content:center;margin-top:6px;flex-wrap:wrap;}
+.kcard-sections{display:flex;gap:3px;justify-content:center;flex-wrap:wrap;margin-bottom:4px;}
+.vsec-dot{width:8px;height:8px;border-radius:50%;display:inline-block;}
+
+/* ===== TABLE VIEW ===== */
+.tbl-wrap{overflow-x:auto;border-radius:var(--r);border:1px solid var(--border);}
+.char-table{width:100%;border-collapse:collapse;font-size:11px;min-width:500px;}
+.char-table th{background:var(--bg3);color:var(--text2);font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.4px;padding:7px 8px;text-align:left;border-bottom:2px solid var(--border2);white-space:nowrap;}
+.char-table th.th-ver{text-align:center;color:var(--accent3);}
+.char-table th.th-ev{text-align:center;color:var(--accent2);}
+.char-table th.th-3d{text-align:center;color:var(--teal);}
+.char-table th.th-duo{text-align:center;color:var(--heart);}
+.char-table td{padding:5px 8px;border-bottom:1px solid var(--border);vertical-align:middle;}
+.char-table tr:last-child td{border-bottom:none;}
+.char-table tr:hover td{background:rgba(255,255,255,.02);}
+.td-name{font-weight:600;white-space:nowrap;min-width:120px;}
+.char-table th:first-child,.char-table td:first-child{position:sticky;left:0;z-index:2;background:var(--bg3);}
+.char-table td:first-child{background:var(--bg2);}
+.char-table tr:hover td:first-child{background:var(--bg3);}
+.char-table tr.dup-row td:first-child{background:var(--bg2);}
+.td-num{color:var(--text3);font-family:monospace;font-size:10px;}
+.td-hearts{color:var(--heart);font-weight:700;text-align:center;}
+.td-ver{text-align:center;}
+.ob-btn{cursor:pointer;border:none;background:none;font-size:15px;line-height:1;padding:2px;transition:transform .15s;}
+.ob-btn:hover{transform:scale(1.25);}
+.td-acts{display:flex;gap:3px;}
+.td-prog{min-width:80px;}
+.prog-txt{font-size:9px;color:var(--text3);margin-bottom:2px;}
+
+/* ===== DETAIL MODAL ===== */
+.ver-section{margin-bottom:10px;}
+.ver-section h4{font-size:10px;color:var(--text2);text-transform:uppercase;letter-spacing:.6px;margin-bottom:5px;padding-bottom:3px;border-bottom:1px solid var(--border);}
+.ver-row{display:flex;align-items:center;gap:8px;padding:3px 0;font-size:12px;border-bottom:1px solid rgba(255,255,255,.03);}
+.ver-row:last-child{border:none;}
+.ver-name{flex:1;color:var(--text);}
+.ver-badge{display:inline-block;font-size:8px;font-weight:700;padding:1px 6px;border-radius:8px;}
+.vb-base{background:#1a1a08;color:var(--gold);border:1px solid rgba(255,217,61,.3);}
+.char-table tr.row-gold td{background:rgba(255,217,61,.08)!important;}
+.char-table tr.row-gold td:first-child{background:rgba(255,217,61,.14)!important;}
+.vb-version{background:#081020;color:var(--accent3);border:1px solid rgba(56,189,248,.3);}
+.vb-event{background:#100818;color:var(--accent2);border:1px solid rgba(167,139,250,.3);}
+.vb-3d{background:#081510;color:var(--teal);border:1px solid rgba(45,212,191,.3);}
+.vb-duo{background:#1a0f14;color:var(--heart);border:1px solid rgba(251,113,133,.35);}
+
+/* MODAL */
+.modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:500;align-items:center;justify-content:center;padding:12px;}
+.modal.open{display:flex;}
+.modal-box{background:var(--bg2);border:1px solid var(--border2);border-radius:var(--r);width:100%;max-width:520px;max-height:90vh;overflow-y:auto;padding:16px;}
+.modal-box h3{font-size:14px;margin-bottom:12px;color:var(--accent);}
+.form-row{margin-bottom:10px;display:flex;flex-direction:column;gap:4px;}
+.form-row input,.form-row select,.form-row textarea{width:100%;}
+.form-2{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(30px);background:var(--bg3);border:1px solid var(--border2);border-radius:var(--rs);padding:8px 16px;font-size:12px;z-index:999;opacity:0;transition:all .3s;pointer-events:none;white-space:nowrap;}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+.confirm-overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:800;display:flex;align-items:center;justify-content:center;}
+.confirm-box{background:var(--bg2);border:1px solid var(--border2);border-radius:var(--r);padding:20px;max-width:320px;text-align:center;}
+.confirm-box p{font-size:13px;margin-bottom:14px;}
+.confirm-box .cbr{display:flex;gap:8px;justify-content:center;}
+.empty{color:var(--text3);font-size:12px;text-align:center;padding:20px;}
+.gsr-item{display:flex;align-items:center;gap:8px;padding:6px;border-radius:var(--rs);cursor:pointer;transition:background .15s;}
+.gsr-item:hover{background:var(--bg3);}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-logo">✦ Sofi Tracker</div>
+  <div class="topbar-btns">
+    <button class="btn" onclick="openGlobalSearch()">🔍 Buscar</button>
+    <button class="btn btn-accent" onclick="openAddSerie()">+ Serie</button>
+    <button class="btn" onclick="exportData()">📤 Exportar</button>
+    <label class="btn" style="cursor:pointer;">📁 Cargar<input type="file" accept=".json" style="display:none" onchange="importFile(event)"></label>
+    <button class="btn btn-ai" onclick="toggleAI()">🤖 IA</button>
+    <button class="btn btn-purple" onclick="openWishlist()">⭐ Wishlist</button>
+    <button class="btn" onclick="repairDuplicateEvents()" title="Fusiona casillas de evento duplicadas creadas por reimportar">🔧 Reparar eventos</button>
+    <button class="btn" onclick="openPrintDictManager()" title="Ver/editar/borrar los emojis de print que ya clasificaste">🗂️ Prints</button>
+    <button class="btn btn-danger" onclick="clearAll()">🗑 Reset</button>
+  </div>
+</div>
+
+<div id="app" style="max-width:1100px;margin:0 auto;padding:12px;">
+  <div class="page active" id="pageHome">
+    <div class="hero" id="heroStats"></div>
+    <div class="series-grid" id="seriesGrid"></div>
+  </div>
+
+  <div class="page" id="pageSerie">
+    <div class="back-bar">
+      <button class="btn btn-sm" onclick="goHome()">← Volver</button>
+      <h2 id="serieTitle"></h2>
+      <div style="margin-left:auto;display:flex;gap:5px;flex-wrap:wrap;">
+        <button class="btn btn-sm" id="btnCartas" onclick="setView('cards')">🃏 Cartas</button>
+        <button class="btn btn-sm" id="btnTabla" onclick="setView('table')">📋 Tabla</button>
+        <button class="btn btn-sm" onclick="openEditSerie(currentSerie)">✏️</button>
+        <button class="btn btn-sm btn-accent" onclick="openImportSofi()">📥 Lista</button>
+        <button class="btn btn-sm btn-purple" onclick="openImportInventory()">📦 Inventario</button>
+        <button class="btn btn-sm btn-green" onclick="openImportLookup(-1)">🔍 Lookup</button>
+        <button class="btn btn-sm btn-accent" onclick="openAddChar()">+ Personaje</button>
+      </div>
+    </div>
+    <div class="stats-row" id="serieStats"></div>
+    <div class="toolbar" id="filterBar"></div>
+    <div id="serieContainer"></div>
+  </div>
+</div>
+
+<!-- SERIE MODAL -->
+<div class="modal" id="serieModal">
+  <div class="modal-box">
+    <h3 id="serieModalTitle">Nueva Serie</h3>
+    <div class="form-row"><label>Nombre</label><input id="sNombre" placeholder="ej: Summer Pockets"></div>
+    <div class="form-row"><label>Emoji</label><input id="sEmoji" placeholder="🌸" maxlength="4"></div>
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:12px;">
+      <button class="btn" onclick="closeModal('serieModal')">Cancelar</button>
+      <button class="btn btn-accent" onclick="saveSerie()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- CHAR MODAL -->
+<div class="modal" id="charModal">
+  <div class="modal-box">
+    <h3 id="charModalTitle">Nuevo Personaje</h3>
+    <div class="form-row"><label>Nombre</label><input id="cNombre" placeholder="ej: Naruse Shiroha"></div>
+    <div class="form-2">
+      <div class="form-row"><label>❤️ Popularidad</label><input id="cHearts" type="number" min="0" value="0"></div>
+      <div class="form-row"><label># en serie</label><input id="cNum" type="number" min="1" value="1"></div>
+    </div>
+    <div class="form-row"><label>Emoji</label><input id="cEmoji" placeholder="🌸" maxlength="4"></div>
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:12px;">
+      <button class="btn" onclick="closeModal('charModal')">Cancelar</button>
+      <button class="btn btn-accent" onclick="saveChar()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- CHAR DETAIL MODAL -->
+<div class="modal" id="charDetailModal">
+  <div class="modal-box" style="max-width:560px;">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;">
+      <span id="cdEmoji" style="font-size:2.2rem;"></span>
+      <div style="flex:1;">
+        <div id="cdName" style="font-size:15px;font-weight:700;"></div>
+        <div id="cdMeta" style="font-size:11px;color:var(--text2);margin-top:2px;"></div>
+      </div>
+      <div style="display:flex;gap:5px;flex-wrap:wrap;">
+        <button class="btn btn-sm" id="cdCopyBtn">📋 slu</button>
+        <button class="btn btn-sm btn-green" id="cdLookupBtn">🔍 Lookup</button>
+        <button class="btn btn-sm" onclick="openEditCharFromDetail()">✏️</button>
+      </div>
+    </div>
+    <div class="ver-section"><h4>🎴 Base</h4><div id="cdBase"></div></div>
+    <div class="ver-section"><h4>✨ Versiones</h4><div id="cdVersions"></div>
+      <button class="btn btn-sm" style="margin-top:5px;" onclick="addManualVer('version')">+ Versión</button>
+    </div>
+    <div class="ver-section"><h4>🎉 Eventos</h4><div id="cdEvents"></div>
+      <button class="btn btn-sm" style="margin-top:5px;" onclick="addManualVer('event')">+ Evento</button>
+    </div>
+    <div class="ver-section"><h4>🎲 3D</h4><div id="cd3d"></div>
+      <button class="btn btn-sm" style="margin-top:5px;" onclick="addManualVer('3d')">+ 3D</button>
+    </div>
+    <div class="ver-section"><h4>👯 Duo</h4><div id="cdDuo"></div>
+      <button class="btn btn-sm" style="margin-top:5px;" onclick="addManualVer('duo')">+ Duo</button>
+    </div>
+    <div style="text-align:right;margin-top:12px;">
+      <button class="btn btn-sm btn-danger" onclick="deleteCharFromDetail()">✕ Eliminar</button>
+      <button class="btn btn-sm" onclick="closeModal('charDetailModal')" style="margin-left:6px;">Cerrar</button>
+    </div>
+  </div>
+</div>
+
+<!-- IMPORT SOFI -->
+<div class="modal" id="importSofiModal">
+  <div class="modal-box">
+    <h3>📥 Importar lista Sofi</h3>
+    <div class="form-row">
+      <label>Pega el texto del bot:</label>
+      <textarea id="importSofiText" style="min-height:130px;font-family:monospace;font-size:11px;" placeholder="`01]` • `❤️16   ` • ☑️ • ... • **Naruse Shiroha**"></textarea>
+    </div>
+    <div style="display:flex;gap:6px;margin-bottom:8px;">
+      <button class="btn" style="flex:1" onclick="parseSofiImport()">👁 Vista previa</button>
+      <button class="btn btn-accent" style="flex:1" onclick="confirmSofiImport()">✅ Importar</button>
+    </div>
+    <div id="importSofiPreview" style="max-height:200px;overflow-y:auto;font-size:11px;"></div>
+    <div style="text-align:right;margin-top:8px;"><button class="btn btn-sm" onclick="closeModal('importSofiModal')">Cerrar</button></div>
+  </div>
+</div>
+
+<!-- IMPORT LOOKUP -->
+<div class="modal" id="lookupModal">
+  <div class="modal-box">
+    <h3>🔍 Lookup — <span id="lookupCharName" style="color:var(--text2);font-weight:400;font-size:12px;"></span></h3>
+    <div class="form-row">
+      <label>Pega el lookup del bot:</label>
+      <textarea id="lookupText" style="min-height:160px;font-family:monospace;font-size:11px;" placeholder="Name: **Naruse Shiroha**&#10;...&#10;**`Versions       ` ➜** `2     `&#10;**`Events         ` ➜** `1     `"></textarea>
+    </div>
+    <div style="display:flex;gap:6px;margin-bottom:8px;">
+      <button class="btn" style="flex:1" onclick="parseLookup()">👁 Vista previa</button>
+      <button class="btn btn-accent" style="flex:1" onclick="confirmLookup()">✅ Crear</button>
+    </div>
+    <div id="lookupPreview" style="max-height:200px;overflow-y:auto;font-size:11px;"></div>
+    <div style="text-align:right;margin-top:8px;"><button class="btn btn-sm" onclick="closeModal('lookupModal')">Cerrar</button></div>
+  </div>
+</div>
+
+<!-- SEARCH -->
+<div class="modal" id="searchModal">
+  <div class="modal-box">
+    <h3>🔍 Búsqueda global</h3>
+    <input style="width:100%;margin-bottom:10px;" id="gSearchInput" placeholder="Nombre o serie..." oninput="doGlobalSearch()">
+    <div id="gSearchResults"><div class="empty">Escribe para buscar...</div></div>
+    <div style="text-align:right;margin-top:8px;"><button class="btn btn-sm" onclick="closeModal('searchModal')">Cerrar</button></div>
+  </div>
+</div>
+
+<!-- WISHLIST MODAL -->
+<div class="modal" id="wishlistModal">
+  <div class="modal-box" style="max-width:500px;">
+    <h3>⭐ Wishlist <span style="font-size:11px;color:var(--text2);font-weight:400;">(30 espacios)</span></h3>
+    <div id="wishlistContainer"></div>
+    <div style="text-align:right;margin-top:10px;"><button class="btn btn-sm" onclick="closeModal('wishlistModal')">Cerrar</button></div>
+  </div>
+</div>
+
+<!-- IMPORT INVENTORY -->
+<div class="modal" id="importInventoryModal">
+  <div class="modal-box">
+    <h3>📦 Importar Inventario</h3>
+    <div class="form-row">
+      <label>Pega tu inventario:</label>
+      <textarea id="inventoryText" style="min-height:150px;font-family:monospace;font-size:11px;" placeholder="☕ • `  ` • `b82u1g` ... **Nomura Miki**  • *Summer Pockets*"></textarea>
+    </div>
+    <div style="display:flex;gap:6px;margin-bottom:8px;">
+      <button class="btn" style="flex:1" onclick="parseInventory()">👁 Vista previa</button>
+      <button class="btn btn-accent" style="flex:1" onclick="confirmInventory()">✅ Importar</button>
+    </div>
+    <div id="pendingTokensBox"></div>
+    <div id="inventoryPreview" style="max-height:220px;overflow-y:auto;font-size:11px;"></div>
+    <div style="text-align:right;margin-top:8px;"><button class="btn btn-sm" onclick="closeModal('importInventoryModal')">Cerrar</button></div>
+  </div>
+</div>
+
+<!-- PRINT DICT MANAGER -->
+<div class="modal" id="printDictModal">
+  <div class="modal-box">
+    <h3>🗂️ Prints clasificados</h3>
+    <div style="font-size:11px;color:var(--text2);margin-bottom:8px;">
+      Aquí están todos los emojis/prints que ya clasificaste. Puedes corregir el nombre o el número de evento, o borrar la clasificación (si la borras, el emoji te va a volver a preguntar la próxima vez que aparezca al importar). Esto NO cambia las cartas que ya tienes guardadas — eso se edita con ✏️ en el detalle del personaje.
+    </div>
+    <div id="printDictList" style="max-height:340px;overflow-y:auto;"></div>
+    <div style="text-align:right;margin-top:8px;"><button class="btn btn-sm" onclick="closeModal('printDictModal')">Cerrar</button></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- AI OVERLAY -->
+<div class="ai-overlay" id="aiOverlay" onclick="toggleAI()"></div>
+
+<!-- AI PANEL -->
+<div class="ai-panel" id="aiPanel">
+  <div class="ai-header">
+    <span class="ai-header-title">🤖 Sofi IA · Gemini</span>
+    <span id="aiKeyStatus" style="font-size:10px;color:var(--text3);"></span>
+    <button class="btn btn-sm" onclick="resetApiKey()" title="Cambiar API key" style="margin-left:4px;">🔑</button>
+    <button class="btn btn-sm" onclick="clearChat()" title="Limpiar chat">🗑</button>
+    <button class="btn btn-sm" onclick="toggleAI()">✕</button>
+  </div>
+  <div class="ai-messages" id="aiMessages"></div>
+  <div class="ai-actions" id="aiActions">
+    <button class="ai-action-btn" onclick="quickAction('wl')">📋 Pegar WL</button>
+    <button class="ai-action-btn" onclick="quickAction('status')">📊 Estado colección</button>
+    <button class="ai-action-btn" onclick="quickAction('priority')">🎯 Prioridades WL</button>
+    <button class="ai-action-btn" onclick="quickAction('fuse')">⚡ Listos para fusionar</button>
+    <button class="ai-action-btn" onclick="quickAction('missing')">❌ Qué me falta</button>
+  </div>
+  <div class="ai-input-row">
+    <textarea class="ai-input" id="aiInput" placeholder="Pregunta algo sobre tu colección..." rows="1"
+      onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendAI();}"></textarea>
+    <button class="ai-send" id="aiSendBtn" onclick="sendAI()">Enviar</button>
+  </div>
+</div>
+
+<script>
+let series=[], currentSerie=-1, editingSerie=-1, editingChar=-1, detailCharIdx=-1, lookupTargetChar=-1;
+let filterSearch='', filterSort='num', currentView='cards';
+let sofiParsed=[], lookupParsed=[];
+
+const EMOJIS=['🌸','✨','🌙','⭐','🎭','🌺','💫','🎀','🌊','🔮','🎵','🌟','🍀','🦋','🌈'];
+function randEmoji(){return EMOJIS[Math.floor(Math.random()*EMOJIS.length)];}
+function uid(){return Math.random().toString(36).slice(2,9);}
+
+function init(){
+  const raw=localStorage.getItem('sofi_v2');
+  if(raw)try{series=JSON.parse(raw);}catch(e){series=[];}
+  renderHero();renderSeries();
+}
+function save(){localStorage.setItem('sofi_v2',JSON.stringify(series));}
+
+// ===== HERO =====
+function renderHero(){
+  let chars=0,totalH=0,obtained=0,totalV=0;
+  series.forEach(s=>(s.chars||[]).forEach(c=>{
+    chars++;totalH+=c.hearts||0;
+    (c.versions||[]).forEach(v=>{totalV++;if(v.obtained)obtained++;});
+  }));
+  document.getElementById('heroStats').innerHTML=`
+    <div class="hcard ca"><div class="n">${series.length}</div><div class="l">Series</div></div>
+    <div class="hcard cb"><div class="n">${chars}</div><div class="l">Personajes</div></div>
+    <div class="hcard cc"><div class="n">${totalH}</div><div class="l">❤️ Total</div></div>
+    <div class="hcard cd"><div class="n">${obtained}</div><div class="l">✅ Tengo</div></div>
+    <div class="hcard ce"><div class="n">${totalV-obtained}</div><div class="l">❌ Faltan</div></div>`;
+}
+
+function goHome(){
+  document.getElementById('pageHome').classList.add('active');
+  document.getElementById('pageSerie').classList.remove('active');
+  currentSerie=-1;renderHero();renderSeries();
+}
+function openSerie(idx){
+  currentSerie=idx;
+  document.getElementById('pageHome').classList.remove('active');
+  document.getElementById('pageSerie').classList.add('active');
+  document.getElementById('serieTitle').textContent=series[idx].name;
+  filterSearch='';filterSort='num';
+  renderFilterBar();renderSerieStats();renderView();
+}
+function setView(v){
+  currentView=v;
+  document.getElementById('btnCartas').classList.toggle('btn-active',v==='cards');
+  document.getElementById('btnTabla').classList.toggle('btn-active',v==='table');
+  renderView();
+}
+function renderView(){
+  if(currentView==='cards') renderCards();
+  else renderTable();
+}
+
+// ===== SERIES HOME =====
+function renderSeries(){
+  const g=document.getElementById('seriesGrid');
+  if(!series.length){g.innerHTML='<div class="empty" style="grid-column:1/-1;">Sin series. ¡Crea una!</div>';return;}
+  g.innerHTML='';
+  series.forEach((s,i)=>{
+    let ob=0,tot=0;
+    (s.chars||[]).forEach(c=>(c.versions||[]).forEach(v=>{tot++;if(v.obtained)ob++;}));
+    const pct=tot>0?Math.round(ob/tot*100):0;
+    const d=document.createElement('div');
+    d.className='serie-card';d.onclick=()=>openSerie(i);
+    d.innerHTML=`
+      <div class="sc-img">${s.emoji||'🎴'}</div>
+      <div class="sc-body">
+        <div class="sc-name">${s.name}</div>
+        <div class="sc-count">${(s.chars||[]).length} personajes · ${ob}/${tot}</div>
+        <div class="prog-bar"><div class="prog-fill" style="width:${pct}%"></div></div>
+        <div style="display:flex;gap:4px;margin-top:6px;justify-content:flex-end;">
+          <button class="btn btn-sm" onclick="event.stopPropagation();openEditSerie(${i})">✏️</button>
+        </div>
+      </div>`;
+    g.appendChild(d);
+  });
+}
+
+function renderSerieStats(){
+  const s=series[currentSerie];
+  const chars=s.chars||[];
+  let ob=0,tot=0,base=0,vers=0,evs=0,tds=0,duos=0;
+  chars.forEach(c=>(c.versions||[]).forEach(v=>{
+    tot++;if(v.obtained)ob++;
+    if(v.type==='base')base++;
+    else if(v.type==='version')vers++;
+    else if(v.type==='event')evs++;
+    else if(v.type==='3d')tds++;
+    else if(v.type==='duo')duos++;
+  }));
+  const pct=tot>0?Math.round(ob/tot*100):0;
+  document.getElementById('serieStats').innerHTML=`
+    <span>✅ Tengo: <b style="color:var(--green)">${ob}</b></span>
+    <span>❌ Faltan: <b style="color:#e53935">${tot-ob}</b></span>
+    <span>🎴 Base: <b>${base}</b></span>
+    <span>✨ Vers: <b style="color:var(--accent3)">${vers}</b></span>
+    <span>🎉 Eventos: <b style="color:var(--accent2)">${evs}</b></span>
+    <span>🎲 3D: <b style="color:var(--teal)">${tds}</b></span>
+    <span>👯 Duo: <b style="color:var(--heart)">${duos}</b></span>
+    <span>📊 Progreso: <b style="color:var(--accent)">${pct}%</b></span>`;
+}
+
+function renderFilterBar(){
+  document.getElementById('filterBar').innerHTML=`
+    <input style="flex:1;min-width:120px;" placeholder="🔍 Buscar..." oninput="doFilter(this.value)" value="${filterSearch}">
+    <span style="font-size:10px;color:var(--text3);">Orden:</span>
+    <span class="chip${filterSort==='num'?' on':''}" onclick="setSort('num',this)"># Lista</span>
+    <span class="chip${filterSort==='hearts'?' on':''}" onclick="setSort('hearts',this)">❤️ Pop.</span>
+    <span class="chip${filterSort==='name'?' on':''}" onclick="setSort('name',this)">A–Z</span>`;
+}
+function setSort(v,el){filterSort=v;document.querySelectorAll('#filterBar .chip').forEach(c=>c.classList.remove('on'));el.classList.add('on');renderView();}
+function doFilter(q){filterSearch=q.toLowerCase();renderView();}
+
+function getSortedChars(){
+  const s=series[currentSerie];
+  let chars=(s.chars||[]).map((c,i)=>({...c,_i:i}));
+  if(filterSearch) chars=chars.filter(c=>c.name.toLowerCase().includes(filterSearch));
+  if(filterSort==='hearts') return [...chars].sort((a,b)=>b.hearts-a.hearts);
+  if(filterSort==='name') return [...chars].sort((a,b)=>a.name.localeCompare(b.name));
+  return [...chars].sort((a,b)=>a.num-b.num);
+}
+
+// ===== CARD VIEW =====
+function renderCards(){
+  const container=document.getElementById('serieContainer');
+  const chars=getSortedChars();
+  container.innerHTML='';
+  if(!chars.length){container.innerHTML='<div class="empty">Sin personajes.</div>';return;}
+  const grid=document.createElement('div');
+  grid.className='cards-grid';
+  chars.forEach(c=>{
+    const versions=c.versions||[];
+    const ob=versions.filter(v=>v.obtained).length;
+    const tot=versions.length;
+    const pct=tot>0?Math.round(ob/tot*100):0;
+    const base=versions.filter(v=>v.type==='base');
+    const vers=versions.filter(v=>v.type==='version');
+    const evs=versions.filter(v=>v.type==='event').sort((a,b)=>(a.order??999999)-(b.order??999999));
+    const tds=versions.filter(v=>v.type==='3d');
+    const duos=versions.filter(v=>v.type==='duo');
+
+    const card=document.createElement('div');
+    card.className='kcard';
+    card.onclick=()=>openCharDetail(c._i);
+
+    // dots per section
+    const dotRow=[
+      ...base.map(v=>`<span class="vsec-dot" style="background:${v.obtained?'var(--gold)':'var(--text3)'}" title="${v.label}"></span>`),
+      ...vers.map(v=>`<span class="vsec-dot" style="background:${v.obtained?'var(--accent3)':'var(--text3)'}" title="${v.label}"></span>`),
+      ...evs.map(v=>`<span class="vsec-dot" style="background:${v.obtained?'var(--accent2)':'var(--text3)'}" title="${v.label}"></span>`),
+      ...tds.map(v=>`<span class="vsec-dot" style="background:${v.obtained?'var(--teal)':'var(--text3)'}" title="${v.label}"></span>`),
+      ...duos.map(v=>`<span class="vsec-dot" style="background:${v.obtained?'var(--heart)':'var(--text3)'}" title="${v.label}"></span>`),
+    ].join('');
+
+    card.innerHTML=`
+      <div class="kcard-img">${c.emoji||'🎴'}</div>
+      <div class="kb">
+        <div class="knum">#${String(c.num).padStart(2,'0')}</div>
+        <div class="kname" title="${c.name}">${c.name}</div>
+        <div class="khearts">❤️ ${c.hearts}</div>
+        <div class="kcard-sections">${dotRow}</div>
+        <div class="kprog">
+          <div class="kprog-txt">${ob}/${tot} · ${pct}%</div>
+          <div class="prog-bar"><div class="prog-fill" style="width:${pct}%"></div></div>
+        </div>
+        <div class="kactions" onclick="event.stopPropagation()">
+          <button class="btn btn-sm" onclick="copySlу(${c._i},this)">📋 slu</button>
+          <button class="btn btn-sm btn-green" onclick="openImportLookup(${c._i})">🔍</button>
+          <button class="btn btn-sm btn-danger" onclick="deleteChar(${c._i})">✕</button>
+        </div>
+      </div>`;
+    grid.appendChild(card);
+  });
+  container.appendChild(grid);
+}
+
+// ===== TABLE VIEW =====
+function renderTable(){
+  const container=document.getElementById('serieContainer');
+  const chars=getSortedChars();
+  container.innerHTML='';
+  if(!chars.length){container.innerHTML='<div class="empty">Sin personajes.</div>';return;}
+
+  // Collect all version slots across all chars to build columns
+  // Columns: Name, ❤️, Base, V2..Vn, Ev1..Evn, 3D1..3Dn, Progress, Actions
+  // Find max version/event/3d counts
+  let maxVer=0,maxEv=0,max3d=0,maxDuo=0;
+  chars.forEach(c=>{
+    const vv=c.versions||[];
+    maxVer=Math.max(maxVer,vv.filter(v=>v.type==='version').length);
+    maxEv=Math.max(maxEv,vv.filter(v=>v.type==='event').length);
+    max3d=Math.max(max3d,vv.filter(v=>v.type==='3d').length);
+    maxDuo=Math.max(maxDuo,vv.filter(v=>v.type==='duo').length);
+  });
+
+  const wrap=document.createElement('div');
+  wrap.className='tbl-wrap';
+  const table=document.createElement('table');
+  table.className='char-table';
+
+  // HEADER
+  let thead='<tr><th>Acc.</th><th>Personaje</th><th>❤️</th><th class="th-ver">Base</th>';
+  for(let i=2;i<=maxVer+1;i++) thead+=`<th class="th-ver">V${i}</th>`;
+  for(let i=1;i<=maxEv;i++) thead+=`<th class="th-ev">Ev${i}</th>`;
+  for(let i=1;i<=max3d;i++) thead+=`<th class="th-3d">3D${i}</th>`;
+  for(let i=1;i<=maxDuo;i++) thead+=`<th class="th-duo">Duo${i}</th>`;
+  thead+='<th>Prog.</th></tr>';
+  table.innerHTML=`<thead>${thead}</thead><tbody id="charTbody"></tbody>`;
+  wrap.appendChild(table);
+  container.appendChild(wrap);
+
+  const tbody=table.querySelector('#charTbody');
+
+  chars.forEach(c=>{
+    const versions=c.versions||[];
+    const base=versions.filter(v=>v.type==='base');
+    const vers=versions.filter(v=>v.type==='version');
+    const evs=versions.filter(v=>v.type==='event').sort((a,b)=>(a.order??999999)-(b.order??999999));
+    const tds=versions.filter(v=>v.type==='3d');
+    const duos=versions.filter(v=>v.type==='duo');
+    const ob=versions.filter(v=>v.obtained).length;
+    const tot=versions.length;
+    const pct=tot>0?Math.round(ob/tot*100):0;
+
+    const tr=document.createElement('tr');
+    if(tot>0 && ob===tot) tr.className='row-gold';
+
+    let cells=`
+      <td><div class="td-acts">
+        <button class="btn btn-sm" onclick="openCharDetail(${c._i})">👁</button>
+        <button class="btn btn-sm" onclick="copySlу(${c._i},this)">📋</button>
+        <button class="btn btn-sm btn-green" onclick="openImportLookup(${c._i})">🔍</button>
+        <button class="btn btn-sm btn-danger" onclick="deleteChar(${c._i})">✕</button>
+      </div></td>
+      <td class="td-name"><span style="margin-right:4px;">${c.emoji||'🎴'}</span>${c.name}</td>
+      <td class="td-hearts">${c.hearts}</td>
+      <td class="td-ver">${base[0]?`<button class="ob-btn" onclick="toggleVersion(${c._i},'${base[0].id}');renderTable()" title="${base[0].label}">${base[0].obtained?'✅':'❌'}</button>`:'—'}</td>`;
+
+    for(let i=0;i<maxVer;i++){
+      const v=vers[i];
+      cells+=`<td class="td-ver">${v?makeVerCell(v,c._i):'<span style="color:var(--text3);font-size:10px;">—</span>'}</td>`;
+    }
+    for(let i=0;i<maxEv;i++){
+      const v=evs[i];
+      cells+=`<td class="td-ver">${v?makeVerCell(v,c._i):'<span style="color:var(--text3);font-size:10px;">—</span>'}</td>`;
+    }
+    for(let i=0;i<max3d;i++){
+      const v=tds[i];
+      cells+=`<td class="td-ver">${v?makeVerCell(v,c._i):'<span style="color:var(--text3);font-size:10px;">—</span>'}</td>`;
+    }
+    for(let i=0;i<maxDuo;i++){
+      const v=duos[i];
+      cells+=`<td class="td-ver">${v?makeVerCell(v,c._i):'<span style="color:var(--text3);font-size:10px;">—</span>'}</td>`;
+    }
+
+    cells+=`
+      <td class="td-prog">
+        <div class="prog-txt">${ob}/${tot} ${pct}%</div>
+        <div class="prog-bar" style="width:70px;"><div class="prog-fill" style="width:${pct}%"></div></div>
+      </td>`;
+
+    tr.innerHTML=cells;
+    tbody.appendChild(tr);
+  });
+
+  renderDupsTable(container, chars);
+}
+
+// ===== TABLA DE BASES / REPETIDAS =====
+function renderDupsTable(container, chars){
+  const wrap=document.createElement('div');
+  wrap.className='tbl-wrap';
+  wrap.style.marginTop='14px';
+  const table=document.createElement('table');
+  table.className='char-table';
+  table.innerHTML=`<thead><tr>
+      <th>Personaje</th><th style="text-align:center;">Necesita</th><th style="text-align:center;">Tienes</th>
+      <th style="text-align:center;">Estado</th><th>Repetidas (código · gen)</th>
+    </tr></thead><tbody id="dupsTbody"></tbody>`;
+  wrap.appendChild(table);
+  container.appendChild(wrap);
+
+  const label=document.createElement('div');
+  label.style.cssText='font-size:11px;font-weight:700;color:var(--accent);margin:10px 0 4px;';
+  label.textContent='🎴 Bases y repetidas (cuántas bases necesitas por personaje para fusionar todo)';
+  wrap.parentNode.insertBefore(label, wrap);
+
+  const tbody=table.querySelector('#dupsTbody');
+  chars.forEach(c=>{
+    const versions=c.versions||[];
+    const verCount=versions.filter(v=>v.type==='version').length;
+    const obtainedVers=versions.filter(v=>v.type==='version'&&v.obtained).length;
+    const needed=verCount+2; // bases totales necesarias (1 por cada fusión + la base original + 1 de repuesto)
+    const dups=c.duplicates||[];
+    const have=1+dups.length+obtainedVers; // tu base + tus repetidas + las versiones que ya conseguiste (ya no necesitas esas bases)
+    const complete=have>=needed;
+
+    const chips=dups.length?dups.map(d=>`
+      <span style="display:inline-flex;align-items:center;gap:2px;margin:2px 3px 2px 0;">
+        <span class="code-chip" onclick="doCopy('sv ${d.code}',this)" title="Copiar sv ${d.code}" style="cursor:pointer;">${d.code}${d.gen?` <span style="color:var(--text3);">G•${d.gen}</span>`:''}</span>
+        <button class="btn btn-sm" style="padding:0 4px;font-size:9px;" onclick="editDup(${c._i},'${d.id}')" title="Editar">✏️</button>
+        <button class="btn btn-sm" style="padding:0 4px;font-size:9px;" onclick="convertDupToVersion(${c._i},'${d.id}')" title="Convertir en versión (V2, V3...)">🔁 V</button>
+        <button class="btn btn-sm btn-danger" style="padding:0 4px;font-size:9px;" onclick="deleteDup(${c._i},'${d.id}')" title="Eliminar">✕</button>
+      </span>`).join(''):'<span style="color:var(--text3);font-size:10px;">— sin repetidas —</span>';
+
+    const tr=document.createElement('tr');
+    if(complete) tr.className='row-gold';
+    tr.innerHTML=`
+      <td class="td-name"><span style="margin-right:4px;">${c.emoji||'🎴'}</span>${c.name}</td>
+      <td style="text-align:center;">${needed}</td>
+      <td style="text-align:center;">${have}</td>
+      <td style="text-align:center;">${complete?'✅':`<span style="color:#e53935;">❌ faltan ${needed-have}</span>`}</td>
+      <td>${chips}</td>`;
+    tbody.appendChild(tr);
+  });
+}
+function deleteDup(charIdx, dupId){
+  const c=series[currentSerie].chars[charIdx];
+  if(!c||!c.duplicates)return;
+  const d=c.duplicates.find(d=>d.id===dupId);
+  if(!confirm(`¿Eliminar la repetida ${d?.code||''} de ${c.name}?`))return;
+  c.duplicates=c.duplicates.filter(d=>d.id!==dupId);
+  save();renderTable();renderSerieStats();renderHero();
+  toast('🗑️ Repetida eliminada','var(--heart)');
+}
+function editDup(charIdx, dupId){
+  const c=series[currentSerie].chars[charIdx];
+  const d=(c.duplicates||[]).find(d=>d.id===dupId);
+  if(!d)return;
+  const newCode=prompt('Código de la carta:', d.code||'');
+  if(newCode===null)return;
+  const newGen=prompt('Generación (solo el número, G•):', d.gen||'');
+  if(newGen===null)return;
+  d.code=newCode.trim();
+  d.gen=newGen.trim()?parseInt(newGen.trim())||newGen.trim():'';
+  save();renderTable();
+  toast('✅ Repetida actualizada','var(--green)');
+}
+
+function convertDupToVersion(charIdx, dupId){
+  const c=series[currentSerie].chars[charIdx];
+  if(!c||!c.duplicates)return;
+  const d=c.duplicates.find(d=>d.id===dupId);
+  if(!d)return;
+  const numStr=prompt(`¿En qué versión se convierte esta repetida (${d.code})? Escribe solo el número, ej: 4 = V4`,'');
+  if(numStr===null)return;
+  const n=parseInt((numStr||'').trim());
+  if(!n||n<2){toast('Escribe un número válido (2 o mayor, ya que V1 es la base)','var(--heart)');return;}
+
+  c.duplicates=c.duplicates.filter(x=>x.id!==dupId);
+  if(!c.versions)c.versions=[];
+  const label=`${c.name} V${n}`;
+  const existing=c.versions.find(v=>v.type==='version' && v.label===label);
+  if(existing){
+    existing.code=d.code;existing.gen=d.gen;existing.obtained=true;
+    toast(`✅ Repetida convertida y asignada a V${n} (ya existía la casilla)`,'var(--green)');
+  } else {
+    c.versions.push({id:uid(),type:'version',label,obtained:true,code:d.code,gen:d.gen});
+    toast(`✅ Repetida convertida en V${n}`,'var(--green)');
+  }
+  save();renderTable();renderSerieStats();renderHero();
+  if(currentSerie>=0)renderView();
+}
+
+function toggleDup(charIdx, dupId){
+  const char=series[currentSerie].chars[charIdx];
+  const d=(char.duplicates||[]).find(d=>d.id===dupId);
+  if(d){
+    d.obtained=!d.obtained;save();renderSerieStats();renderHero();
+    if(d.obtained && d.code){
+      doCopy('sv '+d.code,{textContent:'',set textContent(x){}});
+      toast('✅ Copiado: sv '+d.code,'var(--green)');
+    }
+  }
+}
+
+// ===== TOGGLE OBTAINED =====
+function toggleVersion(charIdx, versionId){
+  const v=(series[currentSerie].chars[charIdx].versions||[]).find(v=>v.id===versionId);
+  if(v){
+    v.obtained=!v.obtained;
+    save();renderSerieStats();renderHero();
+    if(v.obtained && v.code){
+      doCopy('sv '+v.code,{textContent:'',set textContent(x){}});
+      toast('✅ Copiado: sv '+v.code,'var(--green)');
+    }
+  }
+}
+
+// ===== CHAR DETAIL =====
+function openCharDetail(idx){
+  detailCharIdx=idx;
+  const c=series[currentSerie].chars[idx];
+  document.getElementById('cdEmoji').textContent=c.emoji||'🎴';
+  document.getElementById('cdName').textContent=c.name;
+  document.getElementById('cdMeta').textContent=`❤️ ${c.hearts} · #${String(c.num).padStart(2,'0')} · ${series[currentSerie].name}`;
+  document.getElementById('cdCopyBtn').onclick=()=>copySlу(idx,document.getElementById('cdCopyBtn'));
+  document.getElementById('cdLookupBtn').onclick=()=>{closeModal('charDetailModal');openImportLookup(idx);};
+  const versions=c.versions||[];
+  renderVerSection('cdBase',versions.filter(v=>v.type==='base'),idx);
+  renderVerSection('cdVersions',versions.filter(v=>v.type==='version'),idx);
+  renderVerSection('cdEvents',versions.filter(v=>v.type==='event').sort((a,b)=>(a.order??999999)-(b.order??999999)),idx);
+  renderVerSection('cd3d',versions.filter(v=>v.type==='3d'),idx);
+  renderVerSection('cdDuo',versions.filter(v=>v.type==='duo'),idx);
+  openModal('charDetailModal');
+}
+function renderVerSection(id,versions,charIdx){
+  const el=document.getElementById(id);
+  if(!versions.length){el.innerHTML='<div style="font-size:11px;color:var(--text3);padding:3px 0;">Sin cartas</div>';return;}
+  el.innerHTML='';
+  versions.forEach(v=>{
+    const row=document.createElement('div');
+    row.className='ver-row';
+    const cls={base:'vb-base',version:'vb-version',event:'vb-event','3d':'vb-3d',duo:'vb-duo'}[v.type];
+    const codeHtml=v.code?`<span class="code-chip" onclick="event.stopPropagation();doCopy('sv ${v.code}',this)" title="Copiar sv ${v.code}">${v.code}</span>${v.gen?`<span class="gen-chip"> G•${v.gen}</span>`:''}`:'';
+    row.innerHTML=`
+      <button class="ob-btn" onclick="toggleVersion(${charIdx},'${v.id}');openCharDetail(${charIdx})">${v.obtained?'✅':'❌'}</button>
+      <span class="ver-name">${v.type==='event'&&v.order!=null?`#${v.order} · `:''}${v.label}</span>
+      ${codeHtml}
+      <span class="ver-badge ${cls}">${v.type==='3d'?'3D':v.type}</span>
+      <button class="btn btn-sm" style="padding:1px 5px;font-size:10px;" onclick="editVersion(${charIdx},'${v.id}')" title="Editar código/gen, o desincronizar">✏️</button>
+      <button class="btn btn-sm btn-danger" style="padding:1px 5px;font-size:10px;" onclick="deleteVersion(${charIdx},'${v.id}')" title="Eliminar esta carta">✕</button>`;
+    el.appendChild(row);
+  });
+}
+function openPrintDictManager(){
+  renderPrintDictManager();
+  openModal('printDictModal');
+}
+function renderPrintDictManager(){
+  const list=document.getElementById('printDictList');
+  const entries=Object.entries(printDict);
+  if(!entries.length){list.innerHTML='<div class="empty">Todavía no has clasificado ningún print especial.</div>';return;}
+  // Orden: eventos por número (los sin número al final), luego 3D, luego Duo
+  entries.sort((a,b)=>{
+    const [ta,da]=a,[tb,db]=b;
+    if(da.type!==db.type)return da.type==='event'?-1:db.type==='event'?1:da.type.localeCompare(db.type);
+    return (da.order??999999)-(db.order??999999);
+  });
+  list.innerHTML=entries.map(([token,d])=>`
+    <div style="display:flex;align-items:center;gap:8px;padding:6px;border:1px solid var(--border);border-radius:8px;margin-bottom:6px;background:var(--bg3);">
+      ${tokenVisual(token)}
+      <div style="flex:1;font-size:11px;">
+        <span class="ver-badge ${{normal:'vb-base',event:'vb-event','3d':'vb-3d',duo:'vb-duo'}[d.type]}">${d.type==='3d'?'3D':d.type==='normal'?'Normal':d.type}</span>
+        <b>${d.label}</b>${d.type==='event'?` <span style="color:var(--text3);">${d.order!=null?'· Nº '+d.order:'· sin número'}</span>`:''}
+      </div>
+      <button class="btn btn-sm" onclick="editPrintDictEntry('${token.replace(/'/g,"\\'")}')" title="Editar">✏️</button>
+      <button class="btn btn-sm btn-danger" onclick="deletePrintDictEntry('${token.replace(/'/g,"\\'")}')" title="Olvidar clasificación">✕</button>
+    </div>`).join('');
+}
+function editPrintDictEntry(token){
+  const d=printDict[token];
+  if(!d)return;
+  const newLabel=prompt('Nombre/tag:', d.label||'');
+  if(newLabel===null)return;
+  if(newLabel.trim())d.label=newLabel.trim();
+  if(d.type==='event'){
+    const newOrder=prompt('Número de evento (1 = el más viejo, vacío = sin número):', d.order??'');
+    if(newOrder===null){savePrintDict();renderPrintDictManager();return;}
+    d.order=newOrder.trim()!==''?parseInt(newOrder.trim()):undefined;
+  }
+  savePrintDict();
+  renderPrintDictManager();
+  toast('✅ Clasificación actualizada','var(--green)');
+}
+function deletePrintDictEntry(token){
+  const d=printDict[token];
+  if(!confirm(`¿Olvidar la clasificación de "${d?.label||token}"? La próxima vez que este emoji aparezca al importar, te va a volver a preguntar qué es. Las cartas que ya tienes guardadas con este tag NO se borran.`))return;
+  delete printDict[token];
+  savePrintDict();
+  renderPrintDictManager();
+  toast('🗑️ Clasificación olvidada','var(--heart)');
+}
+
+function repairDuplicateEvents(){
+  if(!confirm('Esto va a revisar todos tus personajes y fusionar las casillas de evento que se hayan duplicado por error (mismo número o mismo nombre de evento). No borra código ni progreso, solo une las que sobran. ¿Continuar?'))return;
+  let merged=0;
+  series.forEach(s=>{
+    (s.chars||[]).forEach(c=>{
+      if(!c.versions)return;
+      const events=c.versions.filter(v=>v.type==='event');
+      if(events.length<2)return;
+      const groups={};
+      events.forEach(v=>{
+        const key=v.order!=null?('o:'+v.order):('l:'+(v.label||''));
+        if(!groups[key])groups[key]=[];
+        groups[key].push(v);
+      });
+      const keep=[];
+      Object.values(groups).forEach(group=>{
+        if(group.length===1){keep.push(group[0]);return;}
+        const winner=group.find(v=>v.code)||group[0];
+        group.forEach(v=>{if(v!==winner && v.obtained)winner.obtained=true;});
+        keep.push(winner);
+        merged+=group.length-1;
+      });
+      c.versions=c.versions.filter(v=>v.type!=='event').concat(keep);
+    });
+  });
+  save();renderHero();renderSeries();
+  if(currentSerie>=0){renderView();renderSerieStats();}
+  toast(merged?`🔧 Se fusionaron ${merged} casillas de evento duplicadas`:'✅ No había duplicados que reparar','var(--green)');
+}
+function editVersion(charIdx,vId){
+  const c=series[currentSerie].chars[charIdx];
+  const v=(c.versions||[]).find(v=>v.id===vId);
+  if(!v)return;
+  let changed=false;
+
+  if(v.type!=='base'){
+    const newLabel=prompt('Nombre/tag de esta carta (ej: el nombre del evento). Déjalo igual si no quieres cambiarlo:', v.label||'');
+    if(newLabel!==null && newLabel.trim() && newLabel.trim()!==v.label){
+      v.label=newLabel.trim();
+      changed=true;
+    }
+  }
+
+  const newCode=prompt('Código de la carta (déjalo vacío para desincronizar/quitar el código):', v.code||'');
+  if(newCode!==null){
+    const trimmed=newCode.trim();
+    if(!trimmed){
+      delete v.code;delete v.gen;v.obtained=false;
+      changed=true;
+    } else {
+      const newGen=prompt('Generación (solo el número, G•):', v.gen||'');
+      if(newGen!==null){
+        v.code=trimmed;
+        const genTrim=newGen.trim();
+        v.gen=genTrim?(parseInt(genTrim)||genTrim):v.gen;
+        v.obtained=true;
+        changed=true;
+      }
+    }
+  }
+
+  if(changed){
+    save();openCharDetail(charIdx);renderView();renderSerieStats();renderHero();
+    toast('✅ Carta actualizada','var(--green)');
+  }
+}
+function deleteVersion(charIdx,vId){
+  const c=series[currentSerie].chars[charIdx];
+  const v=(c.versions||[]).find(v=>v.id===vId);
+  if(v && !confirm(`¿Eliminar por completo "${v.label}"? (si solo quieres quitarle el código usa ✏️ en vez de esto)`))return;
+  series[currentSerie].chars[charIdx].versions=series[currentSerie].chars[charIdx].versions.filter(v=>v.id!==vId);
+  save();openCharDetail(charIdx);renderView();renderSerieStats();renderHero();
+}
+function addManualVer(type){
+  const c=series[currentSerie].chars[detailCharIdx];
+  const existing=(c.versions||[]).filter(v=>v.type===type);
+  let label;
+  if(type==='version') label=`${c.name} V${existing.length+2}`;
+  else if(type==='event') label=`${c.name} Event V${existing.length+1}`;
+  else if(type==='duo') label=`${c.name} Duo${existing.length>0?' '+(existing.length+1):''}`.trim();
+  else label=`${c.name} 3D${existing.length>0?' '+(existing.length+1):''}`.trim();
+  c.versions.push({id:uid(),type,label,obtained:false});
+  save();openCharDetail(detailCharIdx);renderView();renderSerieStats();renderHero();
+}
+function openEditCharFromDetail(){closeModal('charDetailModal');openEditChar(detailCharIdx);}
+function deleteCharFromDetail(){
+  closeModal('charDetailModal');deleteChar(detailCharIdx);
+}
+
+// ===== ADD/EDIT SERIE =====
+function openAddSerie(){editingSerie=-1;document.getElementById('serieModalTitle').textContent='Nueva Serie';document.getElementById('sNombre').value='';document.getElementById('sEmoji').value='';openModal('serieModal');}
+function openEditSerie(idx){editingSerie=idx;document.getElementById('serieModalTitle').textContent='Editar Serie';document.getElementById('sNombre').value=series[idx].name;document.getElementById('sEmoji').value=series[idx].emoji||'';openModal('serieModal');}
+function saveSerie(){
+  const name=document.getElementById('sNombre').value.trim();
+  const emoji=document.getElementById('sEmoji').value.trim()||randEmoji();
+  if(!name){toast('Nombre requerido','var(--heart)');return;}
+  if(editingSerie>=0){series[editingSerie].name=name;series[editingSerie].emoji=emoji;}
+  else series.push({name,emoji,chars:[]});
+  save();closeModal('serieModal');renderHero();renderSeries();
+  if(currentSerie>=0) document.getElementById('serieTitle').textContent=series[currentSerie].name;
+  toast(editingSerie>=0?'Serie actualizada':'Serie creada');
+}
+
+// ===== ADD/EDIT CHAR =====
+function openAddChar(){
+  editingChar=-1;
+  document.getElementById('charModalTitle').textContent='Nuevo Personaje';
+  ['cNombre','cEmoji'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('cHearts').value='0';
+  document.getElementById('cNum').value=(series[currentSerie].chars||[]).length+1;
+  openModal('charModal');
+}
+function openEditChar(idx){
+  editingChar=idx;
+  const c=series[currentSerie].chars[idx];
+  document.getElementById('charModalTitle').textContent='Editar Personaje';
+  document.getElementById('cNombre').value=c.name;
+  document.getElementById('cHearts').value=c.hearts;
+  document.getElementById('cNum').value=c.num;
+  document.getElementById('cEmoji').value=c.emoji||'';
+  openModal('charModal');
+}
+function saveChar(){
+  const name=document.getElementById('cNombre').value.trim();
+  const hearts=parseInt(document.getElementById('cHearts').value)||0;
+  const num=parseInt(document.getElementById('cNum').value)||1;
+  const emoji=document.getElementById('cEmoji').value.trim()||randEmoji();
+  if(!name){toast('Nombre requerido','var(--heart)');return;}
+  if(editingChar>=0){
+    Object.assign(series[currentSerie].chars[editingChar],{name,hearts,num,emoji});
+  } else {
+    if(!series[currentSerie].chars) series[currentSerie].chars=[];
+    series[currentSerie].chars.push({name,hearts,num,emoji,versions:[{id:uid(),type:'base',label:name,obtained:false}]});
+  }
+  save();closeModal('charModal');renderView();renderSerieStats();renderHero();
+  toast(editingChar>=0?'Actualizado':'Personaje agregado');
+}
+function deleteChar(idx){
+  confirm2(`¿Eliminar "${series[currentSerie].chars[idx].name}"?`,()=>{
+    series[currentSerie].chars.splice(idx,1);
+    save();renderView();renderSerieStats();renderHero();toast('Eliminado','#e53935');
+  });
+}
+
+// ===== IMPORT SOFI LIST =====
+function openImportSofi(){
+  document.getElementById('importSofiText').value='';
+  document.getElementById('importSofiPreview').innerHTML='';
+  sofiParsed=[];openModal('importSofiModal');
+}
+function parseSofiImport(){
+  sofiParsed=[];
+  document.getElementById('importSofiText').value.split('\n').map(l=>l.trim()).filter(l=>l).forEach(line=>{
+    const numM=line.match(/`(\d+)\]`/);if(!numM)return;
+    const hM=line.match(/❤️\s*(\d+)/);
+    const nM=line.match(/\*\*([^*]+)\*\*/);if(!nM)return;
+    sofiParsed.push({num:parseInt(numM[1]),hearts:hM?parseInt(hM[1]):0,name:nM[1].trim(),emoji:randEmoji()});
+  });
+  const prev=document.getElementById('importSofiPreview');
+  if(!sofiParsed.length){prev.innerHTML='<div class="empty">No se detectaron personajes.</div>';return;}
+  prev.innerHTML=sofiParsed.map(c=>`<div style="display:flex;gap:8px;align-items:center;padding:3px 0;border-bottom:1px solid var(--border);font-size:11px;">
+    <span style="color:var(--text3);font-family:monospace;min-width:24px;">#${String(c.num).padStart(2,'0')}</span>
+    <span style="color:var(--heart);">❤️${c.hearts}</span>
+    <span>${c.name}</span>
+  </div>`).join('')+`<div style="font-size:11px;color:var(--text2);text-align:right;margin-top:5px;">${sofiParsed.length} personajes</div>`;
+}
+function confirmSofiImport(){
+  if(!sofiParsed.length){toast('Primero Vista previa','var(--heart)');return;}
+  if(!series[currentSerie].chars) series[currentSerie].chars=[];
+  let added=0,updated=0;
+  sofiParsed.forEach(c=>{
+    const idx=series[currentSerie].chars.findIndex(x=>x.name.toLowerCase()===c.name.toLowerCase());
+    if(idx>=0){Object.assign(series[currentSerie].chars[idx],{hearts:c.hearts,num:c.num});updated++;}
+    else{series[currentSerie].chars.push({...c,versions:[{id:uid(),type:'base',label:c.name,obtained:false}]});added++;}
+  });
+  save();closeModal('importSofiModal');renderView();renderSerieStats();renderHero();
+  toast(`✅ ${added} agregados, ${updated} actualizados`);
+}
+
+// ===== IMPORT LOOKUP =====
+function openImportLookup(charIdx){
+  lookupTargetChar=charIdx;
+  lookupParsed=[];
+  document.getElementById('lookupText').value='';
+  document.getElementById('lookupPreview').innerHTML='';
+  const name=charIdx>=0?series[currentSerie].chars[charIdx].name:'(se detecta del texto)';
+  document.getElementById('lookupCharName').textContent=name;
+  openModal('lookupModal');
+}
+function parseLookup(){
+  const raw=document.getElementById('lookupText').value;
+  lookupParsed=[];
+
+  // Name from text
+  const nameM=raw.match(/Name:\s*\*\*([^*]+)\*\*/);
+  const charName=nameM?nameM[1].trim():'';
+
+  // Versions: match `Versions       ` ➜` `4     `
+  const verM=raw.match(/Versions\s*`?\s*➜\*?\*?\s*`\s*(\d+)/);
+  const versions=verM?parseInt(verM[1]):0;
+
+  // Events
+  const evM=raw.match(/Events\s*`?\s*➜\*?\*?\s*`\s*(\d+)/);
+  const events=evM?parseInt(evM[1]):0;
+
+  // Resolve target char
+  if(lookupTargetChar<0 && charName){
+    const idx=(series[currentSerie].chars||[]).findIndex(c=>c.name.toLowerCase()===charName.toLowerCase());
+    if(idx>=0) lookupTargetChar=idx;
+  }
+  const displayName=lookupTargetChar>=0?series[currentSerie].chars[lookupTargetChar].name:charName||'?';
+  document.getElementById('lookupCharName').textContent=displayName;
+
+  // Build list: V2..Vn (skip V1=base), then events
+  for(let i=2;i<=versions;i++) lookupParsed.push({type:'version',label:`${displayName} V${i}`});
+  for(let i=1;i<=events;i++) lookupParsed.push({type:'event',label:`${displayName} Event V${i}`});
+
+  const prev=document.getElementById('lookupPreview');
+  if(!lookupParsed.length){prev.innerHTML='<div class="empty">Sin versiones ni eventos detectados. Versiones encontradas: '+versions+', Eventos: '+events+'</div>';return;}
+  prev.innerHTML=lookupParsed.map(v=>{
+    const col=v.type==='version'?'var(--accent3)':'var(--accent2)';
+    return`<div style="display:flex;gap:8px;align-items:center;padding:3px 0;border-bottom:1px solid var(--border);font-size:11px;">
+      <span>${v.type==='version'?'✨':'🎉'}</span>
+      <span style="flex:1;">${v.label}</span>
+      <span style="color:${col};font-size:10px;font-weight:700;">${v.type}</span>
+    </div>`;
+  }).join('')+`<div style="font-size:11px;color:var(--text2);text-align:right;margin-top:5px;">${lookupParsed.length} cartas a crear</div>`;
+}
+function confirmLookup(){
+  if(!lookupParsed.length){toast('Primero Vista previa','var(--heart)');return;}
+  if(lookupTargetChar<0){toast('No se identificó el personaje','var(--heart)');return;}
+  const c=series[currentSerie].chars[lookupTargetChar];
+  if(!c.versions) c.versions=[];
+  let added=0;
+  lookupParsed.forEach(v=>{
+    if(!c.versions.find(x=>x.label===v.label)){
+      c.versions.push({id:uid(),type:v.type,label:v.label,obtained:false});added++;
+    }
+  });
+  save();closeModal('lookupModal');lookupTargetChar=-1;
+  renderView();renderSerieStats();renderHero();
+  toast(`✅ ${added} versiones creadas`);
+}
+
+// ===== COPY SLU =====
+function copySlу(idx,btn){doCopy(`slu ${series[currentSerie].chars[idx].name}`,btn);}
+function doCopy(text,btn){
+  const done=()=>{const o=btn.textContent;btn.textContent='✅';setTimeout(()=>btn.textContent=o,1200);};
+  try{navigator.clipboard.writeText(text).then(done).catch(()=>fallbackCopy(text,done));}
+  catch(e){fallbackCopy(text,done);}
+}
+function fallbackCopy(text,cb){
+  const ta=document.createElement('textarea');
+  ta.value=text;ta.style.cssText='position:fixed;top:-999px;left:-999px;opacity:0;';
+  document.body.appendChild(ta);ta.focus();ta.select();
+  try{document.execCommand('copy');cb();}catch(e){toast('No se pudo copiar','#e53935');}
+  document.body.removeChild(ta);
+}
+
+// ===== GLOBAL SEARCH =====
+function openGlobalSearch(){
+  document.getElementById('gSearchInput').value='';
+  document.getElementById('gSearchResults').innerHTML='<div class="empty">Escribe para buscar...</div>';
+  openModal('searchModal');setTimeout(()=>document.getElementById('gSearchInput').focus(),60);
+}
+function doGlobalSearch(){
+  const q=document.getElementById('gSearchInput').value.toLowerCase().trim();
+  const cont=document.getElementById('gSearchResults');
+  if(q.length<2){cont.innerHTML='<div class="empty">Mínimo 2 caracteres...</div>';return;}
+  const results=[];
+  series.forEach((s,si)=>(s.chars||[]).forEach((c,ci)=>{
+    if(c.name.toLowerCase().includes(q)||s.name.toLowerCase().includes(q))
+      results.push({...c,_si:si,_ci:ci,serieName:s.name});
+  }));
+  if(!results.length){cont.innerHTML='<div class="empty">Sin resultados.</div>';return;}
+  cont.innerHTML=results.slice(0,40).map(c=>{
+    const ob=(c.versions||[]).filter(v=>v.obtained).length;
+    const tot=(c.versions||[]).length;
+    return`<div class="gsr-item" onclick="closeModal('searchModal');openSerie(${c._si})">
+      <span style="font-size:1.4rem;width:32px;text-align:center;">${c.emoji||'🎴'}</span>
+      <div style="flex:1;min-width:0;">
+        <div style="font-size:12px;font-weight:600;">${c.name}</div>
+        <div style="font-size:10px;color:var(--text2);">❤️${c.hearts} · ${ob}/${tot} · ${c.serieName}</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ===== UTILS =====
+function exportData(){
+  if(!series.length){toast('Nada que exportar');return;}
+  const bundle={series, printDict};
+  const a=document.createElement('a');
+  a.setAttribute('href','data:text/json;charset=utf-8,'+encodeURIComponent(JSON.stringify(bundle)));
+  a.setAttribute('download','sofi_backup.json');a.click();toast('Exportado');
+}
+function importFile(event){
+  const file=event.target.files[0];if(!file)return;
+  const reader=new FileReader();
+  reader.onload=e=>{
+    try{
+      const imported=JSON.parse(e.target.result.replace(/^\uFEFF/,'').trim());
+      if(Array.isArray(imported)){
+        // Backup viejo: solo era el array de series, sin diccionario de prints
+        series=imported;save();renderHero();renderSeries();toast('✅ Cargado (backup antiguo, sin diccionario de prints)');
+      } else if(imported && Array.isArray(imported.series)){
+        series=imported.series;save();
+        if(imported.printDict && typeof imported.printDict==='object'){
+          const nuevos=Object.keys(imported.printDict).filter(k=>!(k in printDict)).length;
+          printDict={...imported.printDict,...printDict}; // lo local siempre gana; solo se agregan los que falten
+          savePrintDict();
+          toast(`✅ Cargado (+${nuevos} prints nuevos añadidos, lo que ya tenías clasificado aquí no se tocó)`);
+        } else {
+          toast('✅ Cargado');
+        }
+        renderHero();renderSeries();
+      } else throw 0;
+    }catch(e){toast('Error: JSON inválido','#e53935');}
+  };
+  reader.readAsText(file,'UTF-8');event.target.value='';
+}
+function clearAll(){confirm2('¿Borrar toda la colección?',()=>{series=[];save();renderHero();renderSeries();toast('Borrado','#e53935');});}
+function openModal(id){document.getElementById(id).classList.add('open');}
+function closeModal(id){document.getElementById(id).classList.remove('open');}
+function toast(msg,color='var(--accent2)'){
+  const t=document.getElementById('toast');t.textContent=msg;t.style.borderColor=color;
+  t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2300);
+}
+function confirm2(msg,cb){
+  const ov=document.createElement('div');ov.className='confirm-overlay';
+  ov.innerHTML=`<div class="confirm-box"><p>${msg}</p><div class="cbr"><button class="btn">Cancelar</button><button class="btn btn-danger">Eliminar</button></div></div>`;
+  ov.querySelector('.btn:last-child').onclick=()=>{ov.remove();cb();};
+  ov.querySelector('.btn:first-child').onclick=()=>ov.remove();
+  document.body.appendChild(ov);
+}
+// ===== MAKE VER CELL =====
+function makeVerCell(v, charIdx){
+  const ob=v.obtained;
+  const codeHtml=v.code?`<div><span class="code-chip" onclick="event.stopPropagation();doCopy('sv ${v.code}',this)" title="Copiar sv">${v.code}</span>${v.gen?`<span class="gen-chip"> G•${v.gen}</span>`:''}</div>`:'';
+  return`<div style="display:flex;flex-direction:column;align-items:center;gap:2px;">
+    <button class="ob-btn" onclick="toggleVersion(${charIdx},'${v.id}');renderTable()" title="${v.label}">${ob?'✅':'❌'}</button>
+    ${codeHtml}
+  </div>`;
+}
+
+// ===== WISHLIST =====
+const WISHLIST_SIZE=30;
+function getWishlist(){
+  const raw=localStorage.getItem('sofi_wishlist');
+  try{return raw?JSON.parse(raw):Array(WISHLIST_SIZE).fill(null);}catch(e){return Array(WISHLIST_SIZE).fill(null);}
+}
+function saveWishlist(wl){localStorage.setItem('sofi_wishlist',JSON.stringify(wl));}
+function openWishlist(){
+  renderWishlist();openModal('wishlistModal');
+}
+function renderWishlist(){
+  const wl=getWishlist();
+  const cont=document.getElementById('wishlistContainer');
+  cont.innerHTML='';
+  wl.forEach((item,i)=>{
+    const div=document.createElement('div');
+    div.className='wishlist-slot'+(item?'':' empty');
+    if(item){
+      div.innerHTML=`<span class="wishlist-num">${i+1}.</span>
+        <span style="flex:1;font-weight:600;">${item.name}</span>
+        <span style="font-size:10px;color:var(--text2);">${item.serie||''}</span>
+        <button class="btn btn-sm btn-danger" onclick="removeWishlist(${i})">✕</button>`;
+    } else {
+      div.innerHTML=`<span class="wishlist-num">${i+1}.</span><span>— vacío —</span>`;
+    }
+    cont.appendChild(div);
+  });
+}
+function removeWishlist(idx){
+  const wl=getWishlist();wl[idx]=null;saveWishlist(wl);renderWishlist();
+}
+
+// ===== IMPORT INVENTORY =====
+let inventoryParsed=[];
+let pendingTokensList=[];
+const BASE_PRINT_TOKEN='<:_:1370716278658043955>';
+let printDict={};
+(function(){try{printDict=JSON.parse(localStorage.getItem('sofi_printdict')||'{}');}catch(e){printDict={};}})();
+function savePrintDict(){localStorage.setItem('sofi_printdict',JSON.stringify(printDict));}
+
+function openImportInventory(){
+  document.getElementById('inventoryText').value='';
+  document.getElementById('inventoryPreview').innerHTML='';
+  document.getElementById('pendingTokensBox').innerHTML='';
+  inventoryParsed=[];pendingTokensList=[];
+  openModal('importInventoryModal');
+}
+
+function tokenVisual(token){
+  const m=token.match(/^<a?:(\w+):(\d+)>$/);
+  if(m) return `<img src="https://cdn.discordapp.com/emojis/${m[2]}.png?size=48" style="width:26px;height:26px;vertical-align:middle;" onerror="this.outerHTML='❔'">`;
+  return `<span style="font-size:19px;">${token.replace(/</g,'&lt;').replace(/>/g,'&gt;')}</span>`;
+}
+function getKnownEventLabels(){
+  const set=new Set();
+  Object.values(printDict).forEach(v=>{if(v.type==='event'&&v.label)set.add(v.label);});
+  return [...set];
+}
+
+function parseInventory(){
+  const raw=document.getElementById('inventoryText').value;
+  inventoryParsed=[];
+  raw.split('\n').map(l=>l.trim()).filter(l=>l).forEach(line=>{
+    // El formato siempre tiene 3 bullets " • " separando: TOKEN1 • TOKEN2 • CODE+ELEMENTO+GEN+NOMBRE • SERIE
+    // (en móvil vienen con backticks/negritas, en PC vienen en texto plano — este parser soporta ambos)
+    const parts=line.split(' • ').map(p=>p.trim());
+    if(parts.length<4)return;
+    const token1=parts[0];
+    const middle=parts[2];
+    const serieRaw=parts[parts.length-1];
+
+    // Código: 5-7 alfanumérico, con o sin backticks, con o sin espacio de relleno
+    const codeM=middle.match(/^`?([a-z0-9]{5,7})\s*`?/i);
+    if(!codeM)return;
+    const code=codeM[1];
+
+    // Gen (puede no existir en cartas de evento)
+    const genM=middle.match(/G•(\d+)/);
+    const gen=genM?parseInt(genM[1]):null;
+
+    // Nombre: se obtiene quitando el código, el emoji de elemento, y el campo de gen del inicio del bloque
+    let rest=middle;
+    rest=rest.replace(/^`?[a-z0-9]{5,7}\s*`?\s*/i,''); // quita código
+    rest=rest.replace(/^(<a?:\w+:\d+>|:\w+:)\s*/,''); // quita emoji de elemento (móvil <:x:id> o PC :x:)
+    rest=rest.replace(/^`[^`]*`\s*/,''); // quita gen entre backticks (móvil, con o sin número)
+    rest=rest.replace(/^G•\d+\s*/i,''); // quita gen sin backticks (PC)
+    const name=rest.replace(/\*\*/g,'').trim();
+    if(!name)return;
+
+    const serie=serieRaw.replace(/\*/g,'').trim();
+
+    // Token 1: indica el PRINT (normal/evento/3d/duo). Puede venir como <:_:id> (móvil), :nombre: (PC) o emoji plano.
+    const dictEntry=printDict[token1]||null;
+    const isBase=!token1||token1===BASE_PRINT_TOKEN||(dictEntry&&dictEntry.type==='normal');
+    if(isBase && gen==null)return; // print normal sin Gen no se puede asignar, se descarta
+    const special=(!isBase&&dictEntry)?dictEntry:null;
+    inventoryParsed.push({code,gen,name,serie,token1,isBase,special});
+  });
+
+  // Detectar tokens especiales aún no clasificados
+  const tokenMap={};
+  inventoryParsed.forEach(item=>{
+    if(!item.isBase && !item.special){
+      if(!tokenMap[item.token1])tokenMap[item.token1]={token:item.token1,sample:item.name,count:0};
+      tokenMap[item.token1].count++;
+    }
+  });
+  pendingTokensList=Object.values(tokenMap);
+
+  renderPendingTokensBox();
+
+  const prev=document.getElementById('inventoryPreview');
+  const importable=inventoryParsed.filter(item=>item.isBase||item.special);
+  if(!importable.length){
+    prev.innerHTML=pendingTokensList.length?'<div class="empty">Clasifica los prints de arriba para poder importar esas cartas.</div>':'<div class="empty">No se detectaron cartas.</div>';
+    return;
+  }
+
+  // Group by serie
+  const bySerie={};
+  importable.forEach(c=>{if(!bySerie[c.serie])bySerie[c.serie]=[];bySerie[c.serie].push(c);});
+  let html='';
+  for(const [s,cards] of Object.entries(bySerie)){
+    html+=`<div style="font-size:10px;font-weight:700;color:var(--accent);margin:6px 0 3px;">📚 ${s||'Sin serie'} (${cards.length})</div>`;
+    html+=cards.map(c=>{
+      const tag=c.special?`<span class="ver-badge ${{event:'vb-event','3d':'vb-3d',duo:'vb-duo'}[c.special.type]}" style="font-size:9px;">${c.special.type==='3d'?'3D':c.special.label}</span>`:'';
+      return `<div style="display:flex;gap:8px;align-items:center;padding:2px 0;border-bottom:1px solid var(--border);font-size:11px;">
+      <span class="code-chip">${c.code}</span>
+      <span style="color:var(--text3);">${c.gen!=null?'G•'+c.gen:'—'}</span>
+      <span style="flex:1;">${c.name}</span>
+      ${tag}
+    </div>`;
+    }).join('');
+  }
+  const pendingCount=inventoryParsed.length-importable.length;
+  html+=`<div style="font-size:11px;color:var(--text2);text-align:right;margin-top:5px;">${importable.length} cartas listas${pendingCount?` · ${pendingCount} pendientes de clasificar`:''}</div>`;
+  prev.innerHTML=html;
+}
+
+function renderPendingTokensBox(){
+  const box=document.getElementById('pendingTokensBox');
+  if(!pendingTokensList.length){box.innerHTML='';return;}
+  const knownEvents=getKnownEventLabels();
+  let html=`<div style="font-size:11px;font-weight:700;color:var(--heart);margin-bottom:6px;">⚠️ Prints sin clasificar (${pendingTokensList.length}) — dime qué son:</div>`;
+  pendingTokensList.forEach((pt,i)=>{
+    const evtOptions=knownEvents.map(e=>`<option value="${e.replace(/"/g,'&quot;')}">${e}</option>`).join('');
+    html+=`<div style="border:1px solid var(--border);border-radius:8px;padding:8px;margin-bottom:8px;background:var(--bg3);">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+        ${tokenVisual(pt.token)}
+        <div style="flex:1;font-size:11px;">Visto en <b>${pt.sample}</b>${pt.count>1?` y ${pt.count-1} más`:''}</div>
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:5px;align-items:center;">
+        <button class="btn btn-sm btn-green" onclick="classifyToken(${i},'normal','Normal')" title="Este es el print normal/estándar (equivale a la base), no cuenta como especial">✅ Normal (base)</button>
+        <button class="btn btn-sm" onclick="classifyToken(${i},'3d','3D')">🎲 3D</button>
+        <button class="btn btn-sm" onclick="classifyToken(${i},'duo','Duo')">👯 Duo</button>
+        <input id="evtNum_${i}" type="number" placeholder="Nº evento" title="Número de orden del evento (1 = el más viejo). Solo aplica para eventos, es visual/tuyo." style="font-size:11px;width:70px;">
+        ${knownEvents.length?`<select id="evtSel_${i}" style="font-size:11px;"><option value="">— Evento existente —</option>${evtOptions}</select>
+        <button class="btn btn-sm" onclick="classifyExisting(${i})">Usar</button>`:''}
+        <input id="evtNew_${i}" placeholder="Nombre de evento nuevo" style="font-size:11px;width:130px;">
+        <button class="btn btn-sm btn-accent" onclick="classifyNewEvent(${i})">🎉 Crear evento</button>
+      </div>
+    </div>`;
+  });
+  box.innerHTML=html;
+}
+function classifyToken(i,type,label,order){
+  const pt=pendingTokensList[i];
+  if(!pt)return;
+  printDict[pt.token]={type,label,order:(order!=null&&!isNaN(order))?order:undefined};
+  savePrintDict();
+  toast(`✅ Print clasificado como ${label}`,'var(--green)');
+  parseInventory();
+}
+function classifyExisting(i){
+  const sel=document.getElementById('evtSel_'+i);
+  const numInp=document.getElementById('evtNum_'+i);
+  if(!sel||!sel.value)return;
+  const order=numInp&&numInp.value!==''?parseInt(numInp.value):undefined;
+  classifyToken(i,'event',sel.value,order);
+}
+function classifyNewEvent(i){
+  const inp=document.getElementById('evtNew_'+i);
+  const numInp=document.getElementById('evtNum_'+i);
+  const label=(inp?.value||'').trim();
+  if(!label){toast('Escribe el nombre del evento','var(--heart)');return;}
+  const order=numInp&&numInp.value!==''?parseInt(numInp.value):undefined;
+  classifyToken(i,'event',label,order);
+}
+
+function confirmInventory(){
+  if(!inventoryParsed.length){toast('Primero Vista previa','var(--heart)');return;}
+  let matched=0,created=0,dups=0,already=0,specialAdded=0,pending=0;
+
+  inventoryParsed.forEach(item=>{
+    if(!item.isBase && !item.special){pending++;return;} // aún sin clasificar
+
+    // Find or create serie
+    let sIdx=series.findIndex(s=>s.name.toLowerCase()===item.serie.toLowerCase());
+    if(sIdx<0 && item.serie){
+      series.push({name:item.serie,emoji:randEmoji(),chars:[]});
+      sIdx=series.length-1;
+    }
+    if(sIdx<0)return;
+    if(!series[sIdx].chars)series[sIdx].chars=[];
+
+    const chars=series[sIdx].chars;
+    let cIdx=chars.findIndex(c=>c.name.toLowerCase()===item.name.toLowerCase());
+
+    if(item.special){
+      // Carta de evento/3D/duo
+      if(cIdx<0){
+        chars.push({name:item.name,hearts:0,num:chars.length+1,emoji:randEmoji(),
+          versions:[{id:uid(),type:'base',label:item.name,obtained:false},
+                    {id:uid(),type:item.special.type,label:item.special.label,obtained:true,code:item.code,gen:item.gen,order:item.special.order}],
+          duplicates:[]});
+        created++;
+        return;
+      }
+      const char=chars[cIdx];
+      if(!char.versions)char.versions=[];
+
+      // Para eventos: buscar si ya existe la misma casilla (por número de evento, o por nombre si no tiene número)
+      // así evitamos crear una columna Ev nueva cada vez que se reimporta el mismo evento
+      let existing=null;
+      if(item.special.type==='event'){
+        existing=item.special.order!=null
+          ? char.versions.find(v=>v.type==='event' && v.order===item.special.order)
+          : char.versions.find(v=>v.type==='event' && v.label===item.special.label);
+      }
+      if(existing){
+        if(existing.code && item.code && existing.code===item.code){already++;return;}
+        existing.code=item.code;existing.gen=item.gen;existing.obtained=true;
+        if(item.special.label)existing.label=item.special.label;
+        specialAdded++;
+        return;
+      }
+
+      // 3D/Duo (o evento nuevo que aún no tenía casilla): solo evitar el mismo código exacto repetido
+      const codeExists=char.versions.some(v=>v.code&&item.code&&v.code===item.code);
+      if(codeExists){already++;return;}
+      char.versions.push({id:uid(),type:item.special.type,label:item.special.label,obtained:true,code:item.code,gen:item.gen,order:item.special.order});
+      specialAdded++;
+      return;
+    }
+
+    // Print normal (base/repetida)
+    if(cIdx<0){
+      chars.push({name:item.name,hearts:0,num:chars.length+1,emoji:randEmoji(),
+        versions:[{id:uid(),type:'base',label:item.name,obtained:true,code:item.code,gen:item.gen}],duplicates:[]});
+      created++;
+      return;
+    }
+
+    const char=chars[cIdx];
+    if(!char.versions)char.versions=[];
+    if(!char.duplicates)char.duplicates=[];
+    const base=char.versions.find(v=>v.type==='base');
+
+    const alreadyHasCode=(base&&base.code&&item.code&&base.code===item.code)||char.duplicates.some(d=>d.code&&item.code&&d.code===item.code);
+    if(alreadyHasCode){already++;return;}
+
+    if(base && !base.code){
+      base.code=item.code;base.gen=item.gen;base.obtained=true;
+      matched++;
+    } else {
+      char.duplicates.push({id:uid(),code:item.code,gen:item.gen,obtained:true});
+      dups++;
+    }
+  });
+
+  save();closeModal('importInventoryModal');
+  renderHero();renderSeries();
+  if(currentSerie>=0){renderView();renderSerieStats();}
+  toast(`✅ ${matched} asignadas, ${created} creadas, ${dups} repetidas, ${specialAdded} especiales${already?`, ${already} ya existían`:''}${pending?`, ${pending} sin clasificar`:''}`);
+  setTimeout(()=>{if(getApiKey())recalcWL();},300);
+}
+
+// ===== GEMINI AI =====
+let aiHistory=[];
+let geminiKey='';
+
+function getApiKey(){return localStorage.getItem('sofi_gemini_key')||'';}
+function saveApiKey(k){localStorage.setItem('sofi_gemini_key',k);}
+function resetApiKey(){localStorage.removeItem('sofi_gemini_key');geminiKey='';showKeySetup();}
+
+function toggleAI(){
+  const panel=document.getElementById('aiPanel');
+  const overlay=document.getElementById('aiOverlay');
+  const isOpen=panel.classList.contains('open');
+  panel.classList.toggle('open',!isOpen);
+  overlay.classList.toggle('open',!isOpen);
+  if(!isOpen){
+    geminiKey=getApiKey();
+    if(!geminiKey){showKeySetup();}
+    else{updateKeyStatus();if(!aiHistory.length)sendWelcome();}
+  }
+}
+
+function updateKeyStatus(){
+  document.getElementById('aiKeyStatus').textContent=geminiKey?'✓ conectado':'sin key';
+}
+
+function showKeySetup(){
+  const msgs=document.getElementById('aiMessages');
+  msgs.innerHTML=`<div class="key-box">
+    <p>Para usar la IA necesitas una API key de Gemini (gratis).<br>
+    Obtenla en <b>aistudio.google.com</b> → Get API Key</p>
+    <div style="display:flex;gap:6px;">
+      <input id="keyInput" type="password" placeholder="AIza..." style="flex:1;font-size:12px;" onkeydown="if(event.key==='Enter')saveKeyAndStart()">
+      <button class="btn btn-accent" onclick="saveKeyAndStart()">Guardar</button>
+    </div>
+  </div>`;
+}
+
+function saveKeyAndStart(){
+  const k=document.getElementById('keyInput').value.trim();
+  if(!k){toast('Ingresa una key válida','var(--heart)');return;}
+  geminiKey=k;saveApiKey(k);updateKeyStatus();
+  document.getElementById('aiMessages').innerHTML='';
+  aiHistory=[];
+  sendWelcome();
+}
+
+function buildSystemPrompt(){
+  // Build a snapshot of the collection for context
+  const snap={series:series.map(s=>({
+    name:s.name,
+    chars:(s.chars||[]).map(c=>({
+      name:c.name,
+      hearts:c.hearts,
+      versions:(c.versions||[]).map(v=>({type:v.type,label:v.label,obtained:v.obtained,code:v.code||null,gen:v.gen||null})),
+      duplicates:(c.duplicates||[]).map(d=>({code:d.code,gen:d.gen,obtained:d.obtained}))
+    }))
+  }))};
+
+  const wl=getWishlist().filter(x=>x);
+
+  return `Eres un asistente experto en el bot de Discord "Sofi" (colección de cartas de anime).
+El usuario tiene la siguiente colección:
+${JSON.stringify(snap,null,2)}
+
+Wishlist actual (${wl.length}/30 ocupados):
+${JSON.stringify(wl,null,2)}
+
+REGLAS DEL JUEGO (importantes para tus respuestas):
+- Cada personaje tiene una carta BASE (V1, type:"base"). Para fusionar y obtener una versión superior (V2, V3..., type:"version") necesitas cartas base adicionales.
+- SOLO las versiones de type:"version" cuentan para calcular bases necesarias. Los Eventos (type:"event"), las cartas 3D (type:"3d") y las cartas Duo (type:"duo", personajes combinados/fusionados de 2 en 1) NO cuentan para esto, son coleccionables aparte y no requieren bases extra.
+- Si un personaje tiene N versiones de type:"version" en total, el usuario necesita N+2 cartas base para poder obtener todas esas versiones y quedarse con 1 base de repuesto (N para fusionar + la base original + 1 de sobra). Ejemplo: 5 versiones (V2 a V6) → se necesitan 7 bases en total, es decir 6 repetidas además de la base original.
+- IMPORTANTE: las versiones que YA están obtenidas (obtained:true) cuentan como si fueran repetidas para este cálculo, porque esa base ya se usó y no hay que volver a contarla como pendiente. Fórmula real: bases_que_le_faltan = (N+2) - (1 base + repetidas + versiones_ya_obtenidas). Ejemplo: personaje con V2 y V3 pendientes (N=2, necesita 4 bases en total) que ya consiguió V2 → le faltan solo 4-(1+0+1)=2 bases más, no 3.
+- Las cartas "repetidas" en el inventario son bases adicionales que cuentan SOLO para fusionar versiones (type:"version"), no para eventos ni 3D.
+- Un personaje debe salir de la WL cuando ya tiene suficientes bases: repetidas >= cantidad de versiones tipo "version" (sin contar eventos ni 3D).
+- El comando para buscar cartas base es "sv nombrePersonaje".
+- El comando para ver el lookup de un personaje es "slu nombrePersonaje".
+
+CUANDO EL USUARIO PEGUE SU WL:
+1. Extrae los nombres de personajes de la WL
+2. Para cada personaje, busca en la colección si existe y en qué serie
+3. Responde con JSON estructurado así (solo el JSON, nada más):
+{"actions":[{"action":"update_wl","items":[{"name":"Nombre","serie":"Serie o null","found":true/false}]}]}
+
+CUANDO EL USUARIO PREGUNTE POR PRIORIDADES DE WL:
+Analiza qué personajes necesitan más bases según sus versiones y repetidas actuales.
+
+CUANDO EL USUARIO PREGUNTE POR FUSIONES:
+Lista los personajes donde (repetidas >= versiones_pendientes), listos para fusionar.
+
+MODIFICAR LA COLECCIÓN:
+Puedes agregar o eliminar series, personajes, versiones y cartas repetidas cuando el usuario lo pida explícitamente (ej: "agrega a Luffy a One Piece", "elimina a Sasuke", "quítame una repetida de Goku", "agrega una versión V2 a Naruto"). Para eso responde SOLO con JSON (nada de texto antes o después), usando este formato con una o varias acciones en la lista:
+
+{"actions":[{"action":"TIPO", ...campos...}]}
+
+Tipos disponibles y sus campos:
+- {"action":"add_serie","name":"Nombre serie","emoji":"🔥"}
+- {"action":"remove_serie","name":"Nombre serie"}
+- {"action":"add_character","serie":"Nombre serie","name":"Nombre personaje","hearts":5,"num":1}
+- {"action":"remove_character","name":"Nombre personaje"}
+- {"action":"add_duplicate","name":"Nombre personaje","code":"código opcional","gen":"gen opcional"}
+- {"action":"remove_duplicate","name":"Nombre personaje"}
+- {"action":"add_version","name":"Nombre personaje","type":"v2","label":"V2"}
+- {"action":"remove_version","name":"Nombre personaje","label":"V2"}
+
+Reglas importantes:
+- Si el usuario pide agregar un personaje y no dice la serie, pregúntale antes de responder con JSON (no inventes la serie).
+- Si pide eliminar algo (serie, personaje, versión), confirma primero en texto normal preguntando "¿Seguro que quieres eliminar X?" y solo genera el JSON de la acción cuando el usuario confirme explícitamente en un mensaje posterior.
+- Puedes combinar varias acciones en el mismo array si el usuario pide varias cosas a la vez.
+- Nunca mezcles texto normal y JSON en la misma respuesta: o hablas en texto plano, o respondes solo con el JSON de acción.
+
+Responde siempre en español, de forma concisa. Si ejecutas una acción, devuelve solo el JSON de acción tal como se describe arriba.`;
+}
+
+async function callGemini(userMsg){
+  const url=`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite:generateContent?key=${geminiKey}`;
+  const body={
+    system_instruction:{parts:[{text:buildSystemPrompt()}]},
+    contents:aiHistory.concat([{role:'user',parts:[{text:userMsg}]}]),
+    generationConfig:{temperature:0.7,maxOutputTokens:1500}
+  };
+  const res=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+  if(!res.ok){const e=await res.json();throw new Error(e.error?.message||'Error '+res.status);}
+  const data=await res.json();
+  return data.candidates?.[0]?.content?.parts?.[0]?.text||'Sin respuesta';
+}
+
+function addMsg(role,text,isThinking=false){
+  const msgs=document.getElementById('aiMessages');
+  const div=document.createElement('div');
+  div.className='ai-msg '+role+(isThinking?' thinking':'');
+  div.innerHTML=formatAIText(text);
+  msgs.appendChild(div);
+  msgs.scrollTop=msgs.scrollHeight;
+  return div;
+}
+
+function formatAIText(text){
+  // Basic markdown: **bold**, \`code\`, newlines
+  return text
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/\*\*([^*]+)\*\*/g,'<b>$1</b>')
+    .replace(/\`([^`]+)\`/g,'<code style="background:var(--bg4);padding:1px 4px;border-radius:3px;font-family:monospace;font-size:11px;">$1</code>')
+    .replace(/\n/g,'<br>');
+}
+
+async function sendAI(){
+  if(!geminiKey){showKeySetup();return;}
+  const input=document.getElementById('aiInput');
+  const msg=input.value.trim();
+  if(!msg)return;
+  input.value='';
+  document.getElementById('aiSendBtn').disabled=true;
+
+  addMsg('user',msg);
+  const thinking=addMsg('ai','Pensando...',true);
+
+  try{
+    const reply=await callGemini(msg);
+    thinking.remove();
+    aiHistory.push({role:'user',parts:[{text:msg}]});
+
+    // Check if reply contains a JSON action
+    const jsonMatch=reply.match(/\{[\s\S]*"actions?"[\s\S]*\}/);
+    if(jsonMatch){
+      try{
+        const action=JSON.parse(jsonMatch[0]);
+        handleAIAction(action,reply);
+      }catch(e){addMsg('ai',reply);}
+    } else {
+      addMsg('ai',reply);
+    }
+    aiHistory.push({role:'model',parts:[{text:reply}]});
+  }catch(e){
+    thinking.remove();
+    addMsg('ai','❌ Error: '+e.message);
+    if(e.message.includes('API_KEY')||e.message.includes('401')){
+      setTimeout(()=>showKeySetup(),500);
+    }
+  }
+  document.getElementById('aiSendBtn').disabled=false;
+}
+
+function findCharByName(name){
+  for(const s of series){
+    const c=(s.chars||[]).find(c=>c.name.toLowerCase()===(name||'').toLowerCase());
+    if(c)return {serie:s,char:c};
+  }
+  return null;
+}
+
+function aiUpdateWL(a){
+  const items=a.items||[];
+  const wl=getWishlist();
+  let added=0,skipped=0;
+  items.forEach(item=>{
+    if(wl.find(x=>x&&x.name.toLowerCase()===item.name.toLowerCase())){skipped++;return;}
+    const slot=wl.findIndex(x=>!x);
+    if(slot<0){skipped++;return;}
+    wl[slot]={name:item.name,serie:item.serie||''};
+    added++;
+  });
+  saveWishlist(wl);
+  const summary=items.map(i=>`${i.found?'✅':'❓'} **${i.name}**${i.serie?' · '+i.serie:''}`).join('\n');
+  return `WL actualizada: ${added} agregados, ${skipped} omitidos.\n\n${summary}`;
+}
+
+function aiAddSerie(a){
+  if(!a.name)return '⚠️ Falta el nombre de la serie.';
+  if(series.find(s=>s.name.toLowerCase()===a.name.toLowerCase()))return `⚠️ La serie **${a.name}** ya existe.`;
+  series.push({name:a.name,emoji:a.emoji||randEmoji(),chars:[]});
+  return `✅ Serie **${a.name}** creada.`;
+}
+
+function aiRemoveSerie(a){
+  const idx=series.findIndex(s=>s.name.toLowerCase()===(a.name||'').toLowerCase());
+  if(idx<0)return `❓ No encontré la serie **${a.name}**.`;
+  series.splice(idx,1);
+  if(currentSerie===idx)currentSerie=-1;
+  else if(currentSerie>idx)currentSerie--;
+  return `🗑️ Serie **${a.name}** eliminada.`;
+}
+
+function aiAddCharacter(a){
+  if(!a.name)return '⚠️ Falta el nombre del personaje.';
+  let sIdx=series.findIndex(s=>s.name.toLowerCase()===(a.serie||'').toLowerCase());
+  if(sIdx<0){
+    if(!a.serie)return `⚠️ Necesito saber a qué serie pertenece **${a.name}**.`;
+    series.push({name:a.serie,emoji:randEmoji(),chars:[]});
+    sIdx=series.length-1;
+  }
+  if(!series[sIdx].chars)series[sIdx].chars=[];
+  if(series[sIdx].chars.find(c=>c.name.toLowerCase()===a.name.toLowerCase()))return `⚠️ **${a.name}** ya existe en ${series[sIdx].name}.`;
+  series[sIdx].chars.push({name:a.name,hearts:a.hearts||1,num:a.num||(series[sIdx].chars.length+1),emoji:randEmoji(),versions:[{id:uid(),type:'base',label:a.name,obtained:!!a.obtained}],duplicates:[]});
+  return `✅ **${a.name}** agregado a ${series[sIdx].name}.`;
+}
+
+function aiRemoveCharacter(a){
+  for(const s of series){
+    const idx=(s.chars||[]).findIndex(c=>c.name.toLowerCase()===(a.name||'').toLowerCase());
+    if(idx>=0){s.chars.splice(idx,1);return `🗑️ **${a.name}** eliminado de ${s.name}.`;}
+  }
+  return `❓ No encontré a **${a.name}**.`;
+}
+
+function aiAddDuplicate(a){
+  const found=findCharByName(a.name);
+  if(!found)return `❓ No encontré a **${a.name}**.`;
+  if(!found.char.duplicates)found.char.duplicates=[];
+  found.char.duplicates.push({id:uid(),code:a.code||'',gen:a.gen||'',obtained:true});
+  return `✅ Repetida agregada a **${found.char.name}** (ahora tiene ${found.char.duplicates.length}).`;
+}
+
+function aiRemoveDuplicate(a){
+  const found=findCharByName(a.name);
+  if(!found||!found.char.duplicates||!found.char.duplicates.length)return `❓ **${a.name}** no tiene repetidas para quitar.`;
+  found.char.duplicates.pop();
+  return `🗑️ Repetida quitada de **${found.char.name}** (quedan ${found.char.duplicates.length}).`;
+}
+
+function aiAddVersion(a){
+  const found=findCharByName(a.name);
+  if(!found)return `❓ No encontré a **${a.name}**.`;
+  if(!found.char.versions)found.char.versions=[];
+  found.char.versions.push({id:uid(),type:a.type||'v2',label:a.label||a.type||'Versión',obtained:!!a.obtained});
+  return `✅ Versión **${a.label||a.type}** agregada a ${found.char.name}.`;
+}
+
+function aiRemoveVersion(a){
+  const found=findCharByName(a.name);
+  if(!found||!found.char.versions)return `❓ No encontré versiones de **${a.name}**.`;
+  const idx=found.char.versions.findIndex(v=>(a.label&&v.label.toLowerCase()===a.label.toLowerCase())||(a.type&&v.type===a.type));
+  if(idx<0)return `❓ No encontré la versión indicada en ${found.char.name}.`;
+  found.char.versions.splice(idx,1);
+  return `🗑️ Versión quitada de ${found.char.name}.`;
+}
+
+const AI_ACTION_HANDLERS={
+  update_wl:aiUpdateWL,
+  add_serie:aiAddSerie,
+  remove_serie:aiRemoveSerie,
+  add_character:aiAddCharacter,
+  remove_character:aiRemoveCharacter,
+  add_duplicate:aiAddDuplicate,
+  remove_duplicate:aiRemoveDuplicate,
+  add_version:aiAddVersion,
+  remove_version:aiRemoveVersion
+};
+
+function handleAIAction(action, rawReply){
+  const actions=Array.isArray(action.actions)?action.actions:[action];
+  const messages=[];
+  let touchedCollection=false;
+  actions.forEach(a=>{
+    const handler=AI_ACTION_HANDLERS[a.action];
+    if(!handler){messages.push(`⚠️ Acción desconocida: ${a.action}`);return;}
+    messages.push(handler(a));
+    if(a.action!=='update_wl')touchedCollection=true;
+  });
+  if(touchedCollection){
+    save();
+    renderHero();renderSeries();
+    if(currentSerie>=0){renderView();renderSerieStats();}
+  }
+  addMsg('ai',messages.join('\n'));
+  recalcWL();
+}
+
+function recalcWL(){
+  const wl=getWishlist();
+  let removed=0;
+  wl.forEach((item,i)=>{
+    if(!item)return;
+    // Find char in collection
+    let found=null;
+    series.forEach(s=>(s.chars||[]).forEach(c=>{
+      if(c.name.toLowerCase()===item.name.toLowerCase())found=c;
+    }));
+    if(!found)return;
+    const totalVersions=(found.versions||[]).filter(v=>v.type==='version').length;// V2,V3... count (eventos y 3D no cuentan)
+    const obtainedVers=(found.versions||[]).filter(v=>v.type==='version'&&v.obtained).length;
+    const dups=(found.duplicates||[]).length;
+    // Need dups+obtainedVers >= totalVersions+1 to be done (enough bases para las que faltan + 1 de repuesto; las versiones ya obtenidas ya no cuentan como pendientes)
+    if((dups+obtainedVers)>=totalVersions+1&&totalVersions>0){
+      wl[i]=null;removed++;
+    } else if(totalVersions===0 && dups>=1){
+      // Has no versions yet but has extra base → keep in WL until lookup is done
+    }
+  });
+  if(removed>0){saveWishlist(wl);addMsg('ai',`♻️ ${removed} personaje${removed!==1?'s':''} removidos de la WL por tener suficientes bases.`);}
+}
+
+function sendWelcome(){
+  addMsg('ai','¡Hola! Soy tu asistente de Sofi. Puedo ayudarte a:\n\n**• Gestionar tu Wishlist** — pega tu WL y la agrego\n**• Analizar tu colección** — qué te falta, prioridades\n**• Calcular fusiones** — quién está listo para fusionar\n\n¿En qué te ayudo?');
+}
+
+function quickAction(type){
+  const prompts={
+    wl:'Voy a pegar mi WL a continuación, agrégala:',
+    status:'Dame un resumen completo de mi colección: total de cartas obtenidas, faltantes, progreso por serie.',
+    priority:'¿Cuáles personajes debo priorizar en mi WL según las versiones que tienen y las bases que me faltan?',
+    fuse:'¿Cuáles personajes tengo listos para fusionar ahora mismo? (que tengan suficientes bases repetidas)',
+    missing:'¿Qué versiones me faltan por obtener en toda mi colección?'
+  };
+  document.getElementById('aiInput').value=prompts[type]||'';
+  document.getElementById('aiInput').focus();
+  if(type!=='wl')sendAI();
+}
+
+function clearChat(){aiHistory=[];document.getElementById('aiMessages').innerHTML='';sendWelcome();}
+
+// WL auto-recalc is handled inside confirmInventory
+
+document.addEventListener('keydown',e=>{
+  if(e.key==='Escape'){
+    document.querySelectorAll('.modal.open').forEach(m=>m.classList.remove('open'));
+    document.querySelectorAll('.confirm-overlay').forEach(d=>d.remove());
+  }
+});
+document.querySelectorAll('.modal').forEach(m=>{m.addEventListener('click',e=>{if(e.target===m)m.classList.remove('open');});});
+init();
+</script>
+</body>
+</html>
