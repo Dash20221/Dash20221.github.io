@@ -1,0 +1,1081 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Karuta Tracker</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --bg:#0d0d12;--bg2:#13131a;--bg3:#1a1a24;--bg4:#20202c;
+  --border:#28283a;--border2:#32324a;
+  --text:#e4e4f0;--text2:#8888a8;--text3:#4a4a68;
+  --accent:#e040fb;--accent2:#7c4dff;
+  --sp:#ff6b6b;--lp:#ffd93d;--mp:#6bcb77;--hp:#4d9de0;
+  --dmg:#e53935;--poor:#ff7043;--good:#ffd740;--exc:#66bb6a;--mint:#29b6f6;
+  --r:10px;--rs:6px;
+  --pro:0;
+}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
+#app{max-width:1080px;margin:0 auto;padding:12px;}
+
+/* TOPBAR */
+.topbar{display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--bg2);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:200;flex-wrap:wrap;}
+.topbar-logo{font-size:1.1rem;font-weight:700;letter-spacing:.5px;background:linear-gradient(90deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;flex:1;white-space:nowrap;}
+.topbar-btns{display:flex;gap:6px;flex-wrap:wrap;}
+
+/* BUTTONS */
+.btn{cursor:pointer;background:var(--bg3);color:var(--text);border:1px solid var(--border2);border-radius:var(--rs);padding:6px 12px;font-size:12px;transition:all .15s;white-space:nowrap;font-family:inherit;}
+.btn:hover{background:var(--bg4);}
+.btn-accent{background:#2a0040;border-color:var(--accent);color:var(--accent);}
+.btn-accent:hover{background:#380055;}
+.btn-danger{background:#2a0a0a;border-color:#e53935;color:#e53935;}
+.btn-danger:hover{background:#3a1010;}
+.btn-sm{padding:3px 8px;font-size:11px;}
+.btn-pro{background:linear-gradient(135deg,#1a0030,#001a40);border:1px solid;border-image:linear-gradient(135deg,var(--accent),var(--accent2)) 1;color:transparent;background-clip:text;-webkit-background-clip:text;position:relative;overflow:hidden;}
+.btn-pro::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,#2a0050,#002a60);opacity:0;transition:opacity .2s;}
+.btn-pro:hover::before{opacity:1;}
+.btn-pro span{position:relative;z-index:1;background:linear-gradient(90deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+.btn-pro.active span::after{content:' ✦';font-size:10px;}
+
+/* PRO MODE STYLES */
+body.pro-mode{--bg:#090910;--bg2:#0f0f18;--bg3:#141420;--bg4:#1a1a2a;}
+body.pro-mode .topbar{border-bottom:1px solid #2a1a4a;box-shadow:0 2px 20px rgba(224,64,251,.08);}
+body.pro-mode .kcard{border-color:#1e1e30;box-shadow:0 4px 20px rgba(0,0,0,.4);}
+body.pro-mode .kcard:hover{box-shadow:0 8px 30px rgba(224,64,251,.15);border-color:#3a1a5a;transform:translateY(-4px);}
+body.pro-mode .serie-card{box-shadow:0 4px 16px rgba(0,0,0,.3);}
+body.pro-mode .serie-card:hover{box-shadow:0 8px 24px rgba(124,77,255,.2);border-color:#3a1a5a;}
+body.pro-mode .hcard{border-color:#1e1e30;box-shadow:0 2px 12px rgba(0,0,0,.3);}
+body.pro-mode .pro-stats-panel{display:block;}
+body.pro-mode .pro-bar-wrap{display:block;}
+body.pro-mode .kcard{transition:transform .25s cubic-bezier(.34,1.56,.64,1),box-shadow .25s;}
+body.pro-mode input,body.pro-mode select,body.pro-mode textarea{border-color:#2a1a4a;}
+body.pro-mode input:focus,body.pro-mode select:focus,body.pro-mode textarea:focus{border-color:var(--accent);box-shadow:0 0 0 2px rgba(224,64,251,.1);}
+body.pro-mode .dup-badge{display:inline-flex;}
+body.pro-mode .sec-head{border-bottom-color:#1e1e30;}
+
+/* INPUTS */
+input,select,textarea{background:var(--bg3);color:var(--text);border:1px solid var(--border2);border-radius:var(--rs);padding:6px 10px;font-size:13px;outline:none;transition:border .15s;font-family:inherit;}
+input:focus,select:focus,textarea:focus{border-color:var(--accent);}
+textarea{resize:vertical;}
+label{font-size:12px;color:var(--text2);}
+
+/* STATS HERO */
+.hero{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:8px;margin:12px 0;}
+.hcard{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:10px;text-align:center;transition:border-color .2s;}
+.hcard .n{font-size:1.5rem;font-weight:700;}
+.hcard .l{font-size:10px;color:var(--text2);margin-top:2px;}
+.hcard.ca .n{color:var(--accent);}
+.hcard.csp .n{color:var(--sp);}
+.hcard.clp .n{color:var(--lp);}
+.hcard.cmp .n{color:var(--mp);}
+.hcard.chp .n{color:var(--hp);}
+
+/* PRO STATS PANEL */
+.pro-stats-panel{display:none;background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:12px;margin:8px 0;}
+.pro-stats-panel h4{font-size:11px;color:var(--text2);text-transform:uppercase;letter-spacing:.8px;margin-bottom:10px;}
+.pro-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px;}
+.pro-stat{background:var(--bg3);border-radius:var(--rs);padding:8px 10px;}
+.pro-stat .psl{font-size:10px;color:var(--text3);margin-bottom:3px;}
+.pro-stat .psv{font-size:16px;font-weight:700;}
+.pro-stat.psp .psv{color:var(--sp);}
+.pro-stat.plp .psv{color:var(--lp);}
+.pro-stat.pmp .psv{color:var(--mp);}
+.pro-stat.php .psv{color:var(--hp);}
+.pro-stat.pdup .psv{color:var(--accent);}
+.pro-stat.pmint .psv{color:var(--mint);}
+
+/* PRINT BARS */
+.pro-bar-wrap{display:none;margin-top:10px;}
+.pro-bar-label{display:flex;justify-content:space-between;font-size:10px;color:var(--text2);margin-bottom:3px;}
+.pro-bar-track{height:5px;background:var(--bg3);border-radius:3px;overflow:hidden;margin-bottom:7px;}
+.pro-bar-fill{height:100%;border-radius:3px;transition:width .5s cubic-bezier(.4,0,.2,1);}
+
+/* PAGE SYSTEM */
+.page{display:none;}
+.page.active{display:block;}
+
+/* SERIES GRID */
+.series-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(155px,1fr));gap:10px;margin-top:10px;}
+.serie-card{background:var(--bg2);border:1.5px solid var(--border);border-radius:var(--r);overflow:hidden;cursor:pointer;transition:transform .2s,border-color .2s;position:relative;}
+.serie-card:hover{transform:translateY(-3px);border-color:var(--border2);}
+.serie-card img{width:100%;aspect-ratio:1;object-fit:cover;background:var(--bg3);}
+.serie-card .sc-body{padding:8px;}
+.serie-card .sc-name{font-size:12px;font-weight:600;margin-bottom:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.serie-card .sc-count{font-size:11px;color:var(--text2);}
+.dup-badge{display:none;align-items:center;gap:3px;background:#2a0040;border:1px solid var(--accent);border-radius:10px;padding:1px 7px;font-size:9px;color:var(--accent);font-weight:700;margin-top:3px;}
+.dup-badge.has-dups{display:inline-flex;}
+
+/* TOOLBAR */
+.toolbar{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-bottom:10px;padding:8px;background:var(--bg2);border-radius:var(--rs);border:1px solid var(--border);}
+.chip{background:var(--bg3);border:1px solid var(--border2);border-radius:20px;padding:3px 10px;font-size:11px;cursor:pointer;color:var(--text2);transition:all .15s;}
+.chip.on{border-color:var(--accent);color:var(--accent);}
+
+/* SECTION */
+.sec-head{display:flex;align-items:center;gap:8px;padding:6px 0;cursor:pointer;user-select:none;border-bottom:1px solid var(--border);margin-bottom:8px;}
+.sec-head .sht{font-size:13px;font-weight:600;}
+.sec-head .shc{font-size:11px;color:var(--text2);}
+.sec-head .sha{margin-left:auto;font-size:11px;color:var(--text3);transition:transform .2s;}
+.sec-head.collapsed .sha{transform:rotate(-90deg);}
+.sec-body{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:14px;}
+.sec-body.hidden{display:none;}
+
+/* DUPLICATES SECTION */
+.dup-section{margin-bottom:14px;}
+.dup-sec-head{display:flex;align-items:center;gap:8px;padding:5px 10px;cursor:pointer;user-select:none;background:linear-gradient(90deg,rgba(224,64,251,.07),transparent);border:1px solid rgba(224,64,251,.2);border-radius:var(--rs);margin-bottom:6px;}
+.dup-sec-head .dsht{font-size:11px;font-weight:700;color:var(--accent);display:flex;align-items:center;gap:5px;}
+.dup-sec-head .dshc{font-size:10px;color:var(--text3);}
+.dup-sec-head .dsha{margin-left:auto;font-size:10px;color:var(--text3);transition:transform .2s;}
+.dup-sec-head.collapsed .dsha{transform:rotate(-90deg);}
+.dup-body{display:flex;flex-wrap:wrap;gap:10px;padding:4px 0 8px 8px;}
+.dup-body.hidden{display:none;}
+.kcard.is-dup{border-color:rgba(224,64,251,.25);}
+.kcard.is-dup::after{content:'×2+';position:absolute;top:5px;left:5px;background:rgba(224,64,251,.85);color:#fff;font-size:8px;font-weight:700;padding:1px 5px;border-radius:8px;}
+
+/* KARUTA CARD */
+.kcard{width:170px;background:var(--bg2);border:1.5px solid var(--border);border-radius:var(--r);overflow:hidden;position:relative;transition:transform .2s,box-shadow .2s;}
+.kcard:hover{transform:translateY(-2px);}
+.kcard img{width:100%;aspect-ratio:1;object-fit:cover;background:var(--bg3);}
+.kcard .kb{padding:8px;}
+.kcard .kname{font-size:12px;font-weight:600;text-align:center;margin-bottom:5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.kcard .krow{display:flex;align-items:center;justify-content:center;gap:5px;margin-bottom:4px;flex-wrap:wrap;}
+.kcard .kcode{font-size:10px;color:var(--text3);text-align:center;font-family:monospace;}
+.kcard .kactions{display:flex;gap:3px;justify-content:center;margin-top:5px;flex-wrap:wrap;}
+
+/* PRINT BADGE */
+.pbadge{display:inline-block;font-size:9px;font-weight:700;padding:2px 6px;border-radius:10px;letter-spacing:.3px;}
+.pbadge.sp{background:#3a0a0a;color:var(--sp);}
+.pbadge.lp{background:#3a2e00;color:var(--lp);}
+.pbadge.mp{background:#0a2a12;color:var(--mp);}
+.pbadge.hp{background:#0a1a2e;color:var(--hp);}
+
+/* CONDITION BADGE */
+.cbadge{display:inline-block;font-size:9px;font-weight:700;padding:2px 6px;border-radius:10px;}
+.cbadge.damaged{background:#2a0808;color:var(--dmg);}
+.cbadge.poor{background:#2a1208;color:var(--poor);}
+.cbadge.good{background:#2a2200;color:var(--good);}
+.cbadge.excellent{background:#0a2010;color:var(--exc);}
+.cbadge.mint{background:#042030;color:var(--mint);}
+
+/* MODAL */
+.modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:500;align-items:center;justify-content:center;padding:12px;}
+.modal.open{display:flex;}
+.modal-box{background:var(--bg2);border:1px solid var(--border2);border-radius:var(--r);width:100%;max-width:480px;max-height:90vh;overflow-y:auto;padding:16px;}
+.modal-box h3{font-size:14px;margin-bottom:12px;color:var(--accent);}
+.form-row{margin-bottom:10px;display:flex;flex-direction:column;gap:4px;}
+.form-row input,.form-row select,.form-row textarea{width:100%;}
+.form-2{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.import-area{width:100%;min-height:120px;font-family:monospace;font-size:12px;}
+.detail-img{width:100%;max-height:240px;object-fit:contain;border-radius:var(--rs);background:var(--bg3);margin-bottom:10px;}
+.detail-row{display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid var(--border);font-size:12px;}
+.detail-row:last-child{border:none;}
+.detail-label{color:var(--text2);}
+
+/* TOAST */
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(30px);background:var(--bg3);border:1px solid var(--border2);border-radius:var(--rs);padding:8px 16px;font-size:12px;z-index:999;opacity:0;transition:all .3s;pointer-events:none;white-space:nowrap;}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+
+/* BACK BTN */
+.back-bar{display:flex;align-items:center;gap:8px;margin:8px 0 12px;padding-bottom:8px;border-bottom:1px solid var(--border);}
+.back-bar h2{font-size:14px;}
+
+/* CONFIRM */
+.confirm-overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:800;display:flex;align-items:center;justify-content:center;}
+.confirm-box{background:var(--bg2);border:1px solid var(--border2);border-radius:var(--r);padding:20px;max-width:320px;text-align:center;}
+.confirm-box p{font-size:13px;margin-bottom:14px;}
+.confirm-box .cbr{display:flex;gap:8px;justify-content:center;}
+
+/* SEARCH MODAL */
+.gsr-item{display:flex;align-items:center;gap:8px;padding:6px;border-radius:var(--rs);cursor:pointer;transition:background .15s;}
+.gsr-item:hover{background:var(--bg3);}
+.gsr-img{width:40px;height:40px;border-radius:6px;object-fit:cover;background:var(--bg3);}
+.gsr-name{font-size:12px;font-weight:600;}
+.gsr-meta{font-size:10px;color:var(--text2);margin-top:1px;}
+.gsr-input{width:100%;margin-bottom:10px;}
+.img-drop{border:1.5px dashed var(--border2);border-radius:var(--rs);padding:10px;text-align:center;font-size:11px;color:var(--text2);cursor:pointer;transition:all .15s;position:relative;}
+.img-drop.dragover{border-color:var(--accent);background:#2a0040;color:var(--accent);}
+.img-drop input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;}
+.img-drop-preview{width:64px;height:64px;object-fit:cover;border-radius:6px;margin:0 auto 6px;display:none;background:var(--bg3);}
+.img-drop-preview.show{display:block;}
+.empty{color:var(--text3);font-size:12px;text-align:center;padding:20px;}
+.gray{filter:grayscale(100%) brightness(.5);}
+.print-num{font-size:10px;color:var(--text3);font-family:monospace;}
+
+/* DRAG & DROP */
+.drag-handle{position:absolute;top:4px;right:4px;font-size:14px;color:var(--text3);cursor:grab;line-height:1;padding:2px 3px;border-radius:4px;transition:color .15s,background .15s;z-index:2;}
+.drag-handle:hover{color:var(--text2);background:var(--bg4);}
+.kcard.dragging{opacity:.3;transform:scale(.96);}
+.kcard.drag-over{border-color:var(--accent);box-shadow:0 0 0 2px rgba(224,64,251,.35);transform:scale(1.03);}
+.btn-promote{background:#0a2010;border-color:var(--mp);color:var(--mp);}
+.btn-promote:hover{background:#0f3018;}
+.btn-unpin{background:#1a0a28;border-color:var(--accent);color:var(--accent);}
+.btn-unpin:hover{background:#220f34;}
+.kcard.is-pinned::before{content:'↑';position:absolute;top:5px;left:5px;background:rgba(107,203,119,.85);color:#fff;font-size:9px;font-weight:700;padding:1px 5px;border-radius:8px;}
+
+/* PRO SERIE STATS */
+.serie-pro-stats{display:none;}
+body.pro-mode .serie-pro-stats{display:block;padding:6px 0 0;}
+.sps-bars{display:flex;gap:3px;height:4px;border-radius:2px;overflow:hidden;margin-top:4px;}
+.sps-bar{border-radius:0;}
+</style>
+</head>
+<body>
+<div class="topbar">
+  <div class="topbar-logo">✦ Karuta Tracker</div>
+  <div class="topbar-btns">
+    <button class="btn" onclick="openGlobalSearch()">🔍 Buscar</button>
+    <button class="btn btn-pro" id="proBtn" onclick="togglePro()"><span id="proBtnTxt">⚡ Modo Pro</span></button>
+    <button class="btn btn-accent" onclick="openImport()">📥 Importar</button>
+    <button class="btn" onclick="exportData()">📤 Exportar</button>
+    <label class="btn" style="cursor:pointer;">📁 Cargar<input type="file" accept=".json" style="display:none" onchange="importFile(event)"></label>
+    <button class="btn btn-danger" onclick="clearAll()">🗑 Limpiar</button>
+  </div>
+</div>
+<div id="app">
+  <!-- HOME PAGE -->
+  <div class="page active" id="pageHome">
+    <div class="hero" id="heroStats"></div>
+    <div class="pro-stats-panel" id="proStatsPanel">
+      <h4>📊 Estadísticas Pro</h4>
+      <div class="pro-grid" id="proGrid"></div>
+      <div class="pro-bar-wrap" id="proBarWrap"></div>
+    </div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin:8px 0 6px;">
+      <span style="font-size:12px;color:var(--text2);">Mis series</span>
+      <button class="btn btn-accent btn-sm" onclick="openAddSerie()">+ Nueva serie</button>
+    </div>
+    <div class="series-grid" id="seriesGrid"></div>
+  </div>
+  <!-- SERIE PAGE -->
+  <div class="page" id="pageSerie">
+    <div class="back-bar">
+      <button class="btn btn-sm" onclick="goHome()">← Volver</button>
+      <h2 id="serieTitle"></h2>
+      <button class="btn btn-sm" onclick="openEditSerie(currentSerie)" style="margin-left:auto;">✏️ Editar</button>
+      <button class="btn btn-sm btn-accent" onclick="openAddCard()">+ Carta</button>
+    </div>
+    <div class="toolbar" id="filterBar"></div>
+    <div id="cardsContainer"></div>
+  </div>
+</div>
+
+<!-- MODALS -->
+<div class="modal" id="serieModal">
+  <div class="modal-box">
+    <h3 id="serieModalTitle">Nueva Serie</h3>
+    <div class="form-row"><label>Nombre</label><input id="sNombre" placeholder="ej: Demon Slayer"></div>
+    <div class="form-row">
+      <label>Imagen</label>
+      <div class="img-drop" id="sImgDrop">
+        <img class="img-drop-preview" id="sImgPreview" alt="">
+        <span id="sImgDropTxt">📎 Arrastra una imagen aquí o haz clic para elegirla</span>
+        <input type="file" id="sImgFile" accept="image/*">
+      </div>
+      <input id="sImg" placeholder="...o pega una URL https://" style="margin-top:6px;">
+    </div>
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:12px;">
+      <button class="btn" onclick="closeModal('serieModal')">Cancelar</button>
+      <button class="btn btn-accent" onclick="saveSerie()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal" id="cardModal">
+  <div class="modal-box">
+    <h3 id="cardModalTitle">Nueva Carta</h3>
+    <div class="form-row"><label>Código</label><input id="cCodigo" placeholder="ej: $abc123"></div>
+    <div class="form-2">
+      <div class="form-row"><label>Print #</label><input id="cPrint" type="number" min="1" placeholder="ej: 1"></div>
+      <div class="form-row"><label>Edición</label><input id="cEdicion" type="number" min="1" value="1"></div>
+    </div>
+    <div id="cPrintPreview" style="font-size:11px;margin:-4px 0 8px;min-height:16px;"></div>
+    <div class="form-row"><label>Nombre del personaje</label><input id="cNombre" placeholder="ej: Tanjiro Kamado"></div>
+    <div class="form-row"><label>Condición</label>
+      <select id="cCondicion">
+        <option value="mint">⭐⭐⭐⭐⭐ Mint</option>
+        <option value="excellent">⭐⭐⭐⭐ Excellent</option>
+        <option value="good" selected>⭐⭐⭐ Good</option>
+        <option value="poor">⭐⭐ Poor</option>
+        <option value="damaged">⭐ Damaged</option>
+      </select>
+    </div>
+    <div class="form-row">
+      <label>Imagen</label>
+      <div class="img-drop" id="cImgDrop">
+        <img class="img-drop-preview" id="cImgPreview" alt="">
+        <span id="cImgDropTxt">📎 Arrastra una imagen aquí o haz clic para elegirla</span>
+        <input type="file" id="cImgFile" accept="image/*">
+      </div>
+      <input id="cImg" placeholder="...o pega una URL https://" style="margin-top:6px;">
+    </div>
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:12px;">
+      <button class="btn" onclick="closeModal('cardModal')">Cancelar</button>
+      <button class="btn btn-accent" onclick="saveCard()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal" id="detailModal">
+  <div class="modal-box">
+    <h3 id="detailTitle"></h3>
+    <img class="detail-img" id="detailImg" src="" onerror="this.style.opacity='.2'" alt="">
+    <div id="detailRows"></div>
+    <div style="display:flex;gap:6px;justify-content:flex-end;margin-top:12px;flex-wrap:wrap;">
+      <button id="detailCopyBtn" class="btn btn-sm">📋 Copiar</button>
+      <button class="btn btn-sm" onclick="editCardFromDetail()">✏️ Editar</button>
+      <button class="btn btn-sm btn-danger" onclick="deleteCardFromDetail()">✕ Eliminar</button>
+      <button class="btn btn-sm" onclick="closeModal('detailModal')">Cerrar</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal" id="importModal">
+  <div class="modal-box">
+    <h3>📥 Importar cartas</h3>
+    <div class="form-row"><label>Pega el texto de tus cartas:</label><textarea class="import-area" id="importText" placeholder="◾ `$abc123` · ★★★ · #42 · ◈1 · Demon Slayer · **Tanjiro**"></textarea></div>
+    <div style="display:flex;gap:6px;margin-bottom:8px;">
+      <button class="btn" style="flex:1" onclick="parseImport()">👁 Vista previa</button>
+      <button class="btn btn-accent" style="flex:1" onclick="confirmImport()">✅ Importar</button>
+    </div>
+    <div id="importPreview" style="max-height:260px;overflow-y:auto;font-size:11px;"></div>
+    <div style="text-align:right;margin-top:8px;"><button class="btn btn-sm" onclick="closeModal('importModal')">Cerrar</button></div>
+  </div>
+</div>
+
+<div class="modal" id="searchModal">
+  <div class="modal-box">
+    <h3>🔍 Búsqueda global</h3>
+    <input class="gsr-input" id="gSearchInput" placeholder="Nombre, código, serie..." oninput="doGlobalSearch()">
+    <div id="gSearchResults"><div class="empty">Escribe para buscar...</div></div>
+    <div style="text-align:right;margin-top:8px;"><button class="btn btn-sm" onclick="closeModal('searchModal')">Cerrar</button></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const COND_LABEL={mint:'Mint',excellent:'Excellent',good:'Good',poor:'Poor',damaged:'Damaged'};
+const COND_STARS={mint:'★★★★',excellent:'★★★☆',good:'★★☆☆',poor:'★☆☆☆',damaged:'☆☆☆☆'};
+
+let series=[],currentSerie=-1,editingSerie=-1,editingCard=-1;
+let filterPrint='all',filterCond='all',filterSearch='',importParsed=[];
+let proMode=false;
+
+// ===== STORAGE (IndexedDB, con fallback a localStorage si no está disponible) =====
+const DB_NAME='karuta_db',DB_STORE='kv';
+let _dbPromise=null;
+function idbOpen(){
+  if(_dbPromise)return _dbPromise;
+  _dbPromise=new Promise((resolve,reject)=>{
+    if(!window.indexedDB){reject(new Error('no-indexeddb'));return;}
+    const req=indexedDB.open(DB_NAME,1);
+    req.onupgradeneeded=()=>{req.result.createObjectStore(DB_STORE);};
+    req.onsuccess=()=>resolve(req.result);
+    req.onerror=()=>reject(req.error);
+  });
+  return _dbPromise;
+}
+async function idbGet(key){
+  const db=await idbOpen();
+  return new Promise((resolve,reject)=>{
+    const req=db.transaction(DB_STORE,'readonly').objectStore(DB_STORE).get(key);
+    req.onsuccess=()=>resolve(req.result);
+    req.onerror=()=>reject(req.error);
+  });
+}
+async function idbSet(key,value){
+  const db=await idbOpen();
+  return new Promise((resolve,reject)=>{
+    const tx=db.transaction(DB_STORE,'readwrite');
+    tx.objectStore(DB_STORE).put(value,key);
+    tx.oncomplete=()=>resolve();
+    tx.onerror=()=>reject(tx.error);
+  });
+}
+async function storeGet(key){
+  try{return await idbGet(key);}
+  catch(e){const raw=localStorage.getItem(key);return raw?JSON.parse(raw):undefined;}
+}
+async function storeSet(key,value){
+  try{await idbSet(key,value);}
+  catch(e){localStorage.setItem(key,JSON.stringify(value));}
+}
+
+async function init(){
+  // Migración única: si había una colección vieja en localStorage, se pasa a IndexedDB
+  const legacy=localStorage.getItem('karuta_v2');
+  if(legacy){
+    try{series=JSON.parse(legacy);}catch(e){series=[];}
+    await storeSet('karuta_v2',series);
+    localStorage.removeItem('karuta_v2');
+  }else{
+    const stored=await storeGet('karuta_v2');
+    series=Array.isArray(stored)?stored:[];
+  }
+  proMode=localStorage.getItem('karuta_pro')==='1';
+  if(proMode){document.body.classList.add('pro-mode');document.getElementById('proBtn').classList.add('active');document.getElementById('proBtnTxt').textContent='⚡ Pro ON';}
+  renderHero();renderSeries();
+}
+async function save(){
+  try{
+    await storeSet('karuta_v2',series);
+  }catch(e){
+    toast('⚠️ Sin espacio de almacenamiento: exporta tu colección como respaldo','var(--sp)');
+  }
+}
+
+function togglePro(){
+  proMode=!proMode;
+  document.body.classList.toggle('pro-mode',proMode);
+  document.getElementById('proBtn').classList.toggle('active',proMode);
+  document.getElementById('proBtnTxt').textContent=proMode?'⚡ Pro ON':'⚡ Modo Pro';
+  localStorage.setItem('karuta_pro',proMode?'1':'0');
+  renderHero();
+  if(currentSerie>=0)renderCards();
+  toast(proMode?'✦ Modo Pro activado':'Modo Pro desactivado',proMode?'var(--accent)':'var(--text2)');
+}
+
+function getPrintType(n){
+  if(n<=10)return'sp';
+  if(n<=100)return'lp';
+  if(n<=1000)return'mp';
+  return'hp';
+}
+function getPrintLabel(pt){return{sp:'SP',lp:'LP',mp:'MP',hp:'HP'}[pt];}
+
+// ===== HOME =====
+function goHome(){
+  document.getElementById('pageHome').classList.add('active');
+  document.getElementById('pageSerie').classList.remove('active');
+  currentSerie=-1;
+  renderHero();renderSeries();
+}
+function openSerie(idx){
+  currentSerie=idx;
+  document.getElementById('pageHome').classList.remove('active');
+  document.getElementById('pageSerie').classList.add('active');
+  document.getElementById('serieTitle').textContent=series[idx].name;
+  filterPrint='all';filterCond='all';filterSearch='';
+  renderFilterBar();renderCards();
+}
+
+function renderHero(){
+  let total=0,sp=0,lp=0,mp=0,hp=0,mint=0,dups=0;
+  const seen={};
+  series.forEach(s=>{
+    (s.cards||[]).forEach(c=>{
+      total++;
+      const pt=getPrintType(c.print);
+      if(pt==='sp')sp++;else if(pt==='lp')lp++;else if(pt==='mp')mp++;else hp++;
+      if(c.condition==='mint')mint++;
+      const key=s.name+'|'+c.name+'|'+c.edition;
+      seen[key]=(seen[key]||0)+1;
+      if(seen[key]===2)dups++;
+    });
+  });
+  document.getElementById('heroStats').innerHTML=`
+    <div class="hcard ca"><div class="n">${total}</div><div class="l">Total cartas</div></div>
+    <div class="hcard csp"><div class="n">${sp}</div><div class="l">SP Print</div></div>
+    <div class="hcard clp"><div class="n">${lp}</div><div class="l">LP Print</div></div>
+    <div class="hcard cmp"><div class="n">${mp}</div><div class="l">MP Print</div></div>
+    <div class="hcard chp"><div class="n">${hp}</div><div class="l">HP Print</div></div>
+    <div class="hcard"><div class="n" style="color:var(--mint)">${mint}</div><div class="l">Mint</div></div>
+    <div class="hcard"><div class="n" style="color:var(--accent)">${dups}</div><div class="l">Repetidas</div></div>
+    <div class="hcard"><div class="n" style="color:var(--text2)">${series.length}</div><div class="l">Series</div></div>`;
+
+  // PRO STATS
+  const pp=document.getElementById('proStatsPanel');
+  const pg=document.getElementById('proGrid');
+  const pbw=document.getElementById('proBarWrap');
+  if(!proMode){pp.style.display='none';return;}
+  pp.style.display='block';
+  const bestPrint=series.flatMap(s=>(s.cards||[])).reduce((b,c)=>(!b||c.print<b.print)?c:b,null);
+  const dupTotal=Object.values(seen).filter(v=>v>1).reduce((a,v)=>a+(v-1),0);
+  const condCounts={mint:0,excellent:0,good:0,poor:0,damaged:0};
+  series.forEach(s=>(s.cards||[]).forEach(c=>{if(condCounts[c.condition]!==undefined)condCounts[c.condition]++;}));
+  pg.innerHTML=`
+    <div class="pro-stat psp"><div class="psl">SP Prints</div><div class="psv">${sp}</div></div>
+    <div class="pro-stat plp"><div class="psl">LP Prints</div><div class="psv">${lp}</div></div>
+    <div class="pro-stat pmp"><div class="psl">MP Prints</div><div class="psv">${mp}</div></div>
+    <div class="pro-stat php"><div class="psl">HP Prints</div><div class="psv">${hp}</div></div>
+    <div class="pro-stat pdup"><div class="psl">Copias extras</div><div class="psv">${dupTotal}</div></div>
+    <div class="pro-stat pmint"><div class="psl">Mejor carta</div><div class="psv" style="font-size:12px;">${bestPrint?bestPrint.name+' #'+bestPrint.print:'—'}</div></div>`;
+  if(total>0){
+    pbw.innerHTML=`
+      <h4 style="font-size:11px;color:var(--text2);text-transform:uppercase;letter-spacing:.8px;margin:10px 0 6px;">Distribución de prints</h4>
+      ${bar('SP','var(--sp)',sp,total)}
+      ${bar('LP','var(--lp)',lp,total)}
+      ${bar('MP','var(--mp)',mp,total)}
+      ${bar('HP','var(--hp)',hp,total)}
+      <h4 style="font-size:11px;color:var(--text2);text-transform:uppercase;letter-spacing:.8px;margin:10px 0 6px;">Distribución de condición</h4>
+      ${bar('Mint','var(--mint)',condCounts.mint,total)}
+      ${bar('Excellent','var(--exc)',condCounts.excellent,total)}
+      ${bar('Good','var(--good)',condCounts.good,total)}
+      ${bar('Poor','var(--poor)',condCounts.poor,total)}
+      ${bar('Damaged','var(--dmg)',condCounts.damaged,total)}`;
+    pbw.style.display='block';
+  }
+}
+function bar(label,color,val,total){
+  const pct=total>0?Math.round(val/total*100):0;
+  return`<div class="pro-bar-label"><span>${label}</span><span>${val} (${pct}%)</span></div>
+  <div class="pro-bar-track"><div class="pro-bar-fill" style="width:${pct}%;background:${color};"></div></div>`;
+}
+
+function renderSeries(){
+  const g=document.getElementById('seriesGrid');
+  if(!series.length){g.innerHTML='<div class="empty" style="grid-column:1/-1;">Sin series. ¡Crea una!</div>';return;}
+  g.innerHTML='';
+  series.forEach((s,i)=>{
+    const cards=s.cards||[];
+    const total=cards.length;
+    // detect dups
+    const seen={};cards.forEach(c=>{const k=c.name+'|'+c.edition;seen[k]=(seen[k]||0)+1;});
+    const dupCount=Object.values(seen).filter(v=>v>1).reduce((a,v)=>a+(v-1),0);
+    // print dist for pro
+    let spC=0,lpC=0,mpC=0,hpC=0;
+    cards.forEach(c=>{const pt=getPrintType(c.print);if(pt==='sp')spC++;else if(pt==='lp')lpC++;else if(pt==='mp')mpC++;else hpC++;});
+    const d=document.createElement('div');
+    d.className='serie-card';
+    d.onclick=()=>openSerie(i);
+    d.innerHTML=`
+      <img src="${s.img||''}" onerror="this.style.opacity='0.15'" alt="">
+      <div class="sc-body">
+        <div class="sc-name">${s.name}</div>
+        <div class="sc-count">${total} carta${total!==1?'s':''}</div>
+        <span class="dup-badge${dupCount>0?' has-dups':''}">✦ ${dupCount} rep.</span>
+        <div class="serie-pro-stats">
+          <div class="sps-bars">
+            ${spC?`<div class="sps-bar" style="flex:${spC};background:var(--sp);"></div>`:''}
+            ${lpC?`<div class="sps-bar" style="flex:${lpC};background:var(--lp);"></div>`:''}
+            ${mpC?`<div class="sps-bar" style="flex:${mpC};background:var(--mp);"></div>`:''}
+            ${hpC?`<div class="sps-bar" style="flex:${hpC};background:var(--hp);"></div>`:''}
+          </div>
+        </div>
+        <div style="display:flex;gap:4px;margin-top:5px;justify-content:flex-end;">
+          <button class="btn btn-sm" onclick="event.stopPropagation();openEditSerie(${i})">✏️</button>
+        </div>
+      </div>`;
+    g.appendChild(d);
+  });
+}
+
+// ===== FILTER BAR =====
+function renderFilterBar(){
+  const fb=document.getElementById('filterBar');
+  fb.innerHTML=`
+    <input style="flex:1;min-width:120px;" placeholder="🔍 Buscar..." oninput="filterCards(this.value)" value="${filterSearch}">
+    <span style="font-size:10px;color:var(--text3);">Print:</span>
+    ${['all','sp','lp','mp','hp'].map(v=>`<span class="chip${filterPrint===v?' on':''}" data-f="${v}" onclick="setFilter('print','${v}',this)">${v==='all'?'Todos':v.toUpperCase()}</span>`).join('')}
+    <span style="font-size:10px;color:var(--text3);">Cond:</span>
+    ${['all','mint','excellent','good','poor','damaged'].map(v=>`<span class="chip${filterCond===v?' on':''}" data-f2="${v}" onclick="setFilter('cond','${v}',this)">${v==='all'?'Todas':COND_LABEL[v]}</span>`).join('')}`;
+}
+
+// ===== RENDER CARDS WITH DUPS =====
+function renderCards(){
+  const container=document.getElementById('cardsContainer');
+  const allCards=(series[currentSerie].cards||[]).map((c,i)=>({...c,_i:i}));
+
+  const q=filterSearch.toLowerCase();
+  const cards=allCards.filter(c=>{
+    if(filterPrint!=='all'&&getPrintType(c.print)!==filterPrint)return false;
+    if(filterCond!=='all'&&c.condition!==filterCond)return false;
+    if(q&&!c.name.toLowerCase().includes(q)&&!c.code.toLowerCase().includes(q))return false;
+    return true;
+  });
+
+  // Detect duplicates by name+edition. Pinned cards always go to main list.
+  // Among non-pinned, if a group has >1, they're dups. Pinned ones from same group also stay in main.
+  const keyCounts={};
+  cards.forEach(c=>{
+    if(!c.pinned){const k=c.name.toLowerCase()+'|'+c.edition;keyCounts[k]=(keyCounts[k]||0)+1;}
+  });
+  const dupKeys=new Set(Object.keys(keyCounts).filter(k=>keyCounts[k]>1));
+
+  const unique=cards.filter(c=>c.pinned||!dupKeys.has(c.name.toLowerCase()+'|'+c.edition));
+  const dups=cards.filter(c=>!c.pinned&&dupKeys.has(c.name.toLowerCase()+'|'+c.edition));
+
+  container.innerHTML='';
+
+  // Flat list, no print-type sections
+  if(unique.length){
+    const wrap=document.createElement('div');
+    wrap.className='sec-body';
+    wrap.style.marginBottom='14px';
+    unique.forEach(c=>wrap.appendChild(makeKcard(c,false)));
+    container.appendChild(wrap);
+  }
+
+  // DUPLICATES SECTION
+  if(dups.length){
+    const dupSec=document.createElement('div');
+    dupSec.className='dup-section';
+    dupSec.innerHTML=`<div class="dup-sec-head" onclick="toggleDupSec(this)">
+      <span class="dsht">✦ Repetidas <span style="background:var(--accent);color:#fff;font-size:8px;padding:1px 5px;border-radius:8px;margin-left:4px;">${dups.length}</span></span>
+      <span class="dshc">${[...new Set(dups.map(c=>c.name+'|'+c.edition))].length} carta${[...new Set(dups.map(c=>c.name+'|'+c.edition))].length!==1?'s':''} duplicadas</span>
+      <span class="dsha">▾</span>
+    </div>
+    <div class="dup-body"></div>`;
+    container.appendChild(dupSec);
+    const dupBody=dupSec.querySelector('.dup-body');
+
+    // Group dups by name+edition
+    const dupGroups={};
+    dups.forEach(c=>{const k=c.name+' ed.'+c.edition;if(!dupGroups[k])dupGroups[k]=[];dupGroups[k].push(c);});
+    Object.entries(dupGroups).sort(([a],[b])=>a.localeCompare(b)).forEach(([name,cs])=>{
+      const grpDiv=document.createElement('div');
+      grpDiv.style.cssText='width:100%;padding:4px 0 4px 4px;border-left:2px solid rgba(224,64,251,.25);margin-bottom:6px;';
+      grpDiv.innerHTML=`<div style="font-size:10px;color:var(--accent);font-weight:700;margin-bottom:5px;padding-left:4px;">⟳ ${name} ×${cs.length}</div>`;
+      const row=document.createElement('div');
+      row.style.cssText='display:flex;flex-wrap:wrap;gap:8px;';
+      cs.sort((a,b)=>a.print-b.print).forEach(c=>row.appendChild(makeKcard(c,true,true)));
+      grpDiv.appendChild(row);
+      dupBody.appendChild(grpDiv);
+    });
+  }
+
+  if(!cards.length)container.innerHTML='<div class="empty">Sin cartas que coincidan.</div>';
+}
+
+function makeKcard(c,isDup,showPromote){
+  const pt=getPrintType(c.print);
+  const d=document.createElement('div');
+  d.className='kcard'+(isDup?' is-dup':'')+(c.pinned?' is-pinned':'');
+  d.draggable=true;
+  d.dataset.idx=c._i;
+  const promoteBtn=showPromote
+    ?`<button class="btn btn-sm btn-promote" title="Mover a lista principal" onclick="event.stopPropagation();promoteCard(${c._i})">⬆</button>`
+    :'';
+  const unpinBtn=c.pinned
+    ?`<button class="btn btn-sm btn-unpin" title="Volver a repetidas" onclick="event.stopPropagation();unpinCard(${c._i})">⬇</button>`
+    :'';
+  d.innerHTML=`
+    <div class="drag-handle">⠿</div>
+    <img src="${c.img||''}" onerror="this.style.opacity='0.2'" alt="">
+    <div class="kb">
+      <div class="kname" title="${c.name} ed.${c.edition}">${c.name}${c.edition>1?` <span style="color:var(--text3);font-weight:400;font-size:10px;">ed.${c.edition}</span>`:''}</div>
+      <div class="krow">
+        <span class="pbadge ${pt}">${getPrintLabel(pt)}</span>
+        <span class="cbadge ${c.condition}">${COND_LABEL[c.condition]}</span>
+      </div>
+      <div class="krow">
+        <span class="print-num">#${c.print}</span>
+        <span style="font-size:10px;color:var(--text2);">${COND_STARS[c.condition]}</span>
+      </div>
+      <div class="kcode">${c.code}</div>
+      <div class="kactions">
+        <button class="btn btn-sm" onclick="event.stopPropagation();openDetail(${c._i})">👁</button>
+        <button class="btn btn-sm" onclick="event.stopPropagation();copyCode('${c.code}',this)">📋</button>
+        <button class="btn btn-sm" onclick="event.stopPropagation();openEditCard(${c._i})">✏️</button>
+        ${promoteBtn}${unpinBtn}
+        <button class="btn btn-sm btn-danger" onclick="event.stopPropagation();deleteCard(${c._i})">✕</button>
+      </div>
+    </div>`;
+  initDrag(d);
+  return d;
+}
+
+function promoteCard(idx){
+  series[currentSerie].cards[idx].pinned=true;
+  save();renderCards();toast('Carta movida a la lista principal','var(--mp)');
+}
+function unpinCard(idx){
+  delete series[currentSerie].cards[idx].pinned;
+  save();renderCards();toast('Carta devuelta a repetidas','var(--accent)');
+}
+
+// ===== DRAG & DROP =====
+let dragSrc=null;
+function initDrag(el){
+  el.addEventListener('dragstart',e=>{
+    dragSrc=el;
+    setTimeout(()=>el.classList.add('dragging'),0);
+    e.dataTransfer.effectAllowed='move';
+  });
+  el.addEventListener('dragend',()=>{
+    dragSrc=null;
+    document.querySelectorAll('.kcard').forEach(c=>c.classList.remove('dragging','drag-over'));
+  });
+  el.addEventListener('dragover',e=>{
+    e.preventDefault();
+    if(dragSrc&&dragSrc!==el){
+      document.querySelectorAll('.kcard.drag-over').forEach(c=>c.classList.remove('drag-over'));
+      el.classList.add('drag-over');
+    }
+  });
+  el.addEventListener('dragleave',e=>{
+    if(!el.contains(e.relatedTarget))el.classList.remove('drag-over');
+  });
+  el.addEventListener('drop',e=>{
+    e.preventDefault();
+    if(!dragSrc||dragSrc===el)return;
+    el.classList.remove('drag-over');
+    const fromIdx=parseInt(dragSrc.dataset.idx);
+    const toIdx=parseInt(el.dataset.idx);
+    const cards=series[currentSerie].cards;
+    const [moved]=cards.splice(fromIdx,1);
+    const newTo=fromIdx<toIdx?toIdx-1:toIdx;
+    cards.splice(newTo,0,moved);
+    save();
+    renderCards();
+    toast('Orden guardado');
+  });
+}
+
+function setFilter(type,val,el){
+  if(type==='print'){filterPrint=val;document.querySelectorAll('[data-f]').forEach(c=>c.classList.remove('on'));el.classList.add('on');}
+  else{filterCond=val;document.querySelectorAll('[data-f2]').forEach(c=>c.classList.remove('on'));el.classList.add('on');}
+  renderCards();
+}
+function filterCards(q){filterSearch=q.toLowerCase();renderCards();}
+
+function toggleSec(head){
+  head.classList.toggle('collapsed');
+  head.nextElementSibling.classList.toggle('hidden');
+}
+function toggleDupSec(head){
+  head.classList.toggle('collapsed');
+  head.nextElementSibling.classList.toggle('hidden');
+}
+
+// ===== ADD/EDIT SERIE =====
+function openAddSerie(){editingSerie=-1;document.getElementById('serieModalTitle').textContent='Nueva Serie';document.getElementById('sNombre').value='';document.getElementById('sImg').value='';resetImgDrop('sImgPreview','sImgDropTxt','');openModal('serieModal');}
+function openEditSerie(idx){editingSerie=idx;document.getElementById('serieModalTitle').textContent='Editar Serie';document.getElementById('sNombre').value=series[idx].name;document.getElementById('sImg').value=series[idx].img||'';resetImgDrop('sImgPreview','sImgDropTxt',series[idx].img||'');openModal('serieModal');}
+function saveSerie(){
+  const name=document.getElementById('sNombre').value.trim();
+  const img=document.getElementById('sImg').value.trim();
+  if(!name){toast('Nombre requerido','var(--sp)');return;}
+  if(editingSerie>=0){series[editingSerie].name=name;series[editingSerie].img=img;}
+  else{series.push({name,img,cards:[]});}
+  save();closeModal('serieModal');renderHero();renderSeries();
+  toast(editingSerie>=0?'Serie actualizada':'Serie creada');
+}
+
+// ===== ADD/EDIT CARD =====
+function openAddCard(){editingCard=-1;document.getElementById('cardModalTitle').textContent='Nueva Carta';document.getElementById('cCodigo').value='';document.getElementById('cPrint').value='';document.getElementById('cEdicion').value='1';document.getElementById('cNombre').value='';document.getElementById('cCondicion').value='good';document.getElementById('cImg').value='';document.getElementById('cPrintPreview').textContent='';resetImgDrop('cImgPreview','cImgDropTxt','');openModal('cardModal');}
+function openEditCard(idx){
+  editingCard=idx;
+  const c=series[currentSerie].cards[idx];
+  document.getElementById('cardModalTitle').textContent='Editar Carta';
+  document.getElementById('cCodigo').value=c.code;
+  document.getElementById('cPrint').value=c.print;
+  document.getElementById('cEdicion').value=c.edition;
+  document.getElementById('cNombre').value=c.name;
+  document.getElementById('cCondicion').value=c.condition;
+  document.getElementById('cImg').value=c.img||'';
+  updatePrintPreview(c.print);
+  resetImgDrop('cImgPreview','cImgDropTxt',c.img||'');
+  openModal('cardModal');
+}
+document.getElementById('cPrint').addEventListener('input',function(){updatePrintPreview(parseInt(this.value)||0);});
+function updatePrintPreview(n){
+  const el=document.getElementById('cPrintPreview');
+  if(!n){el.textContent='';return;}
+  const pt=getPrintType(n);
+  const colors={sp:'var(--sp)',lp:'var(--lp)',mp:'var(--mp)',hp:'var(--hp)'};
+  el.innerHTML=`Print <b style="color:${colors[pt]};">${pt.toUpperCase()}</b> (#${n})`;
+}
+function saveCard(){
+  const code=document.getElementById('cCodigo').value.trim();
+  const print=parseInt(document.getElementById('cPrint').value)||0;
+  const edition=parseInt(document.getElementById('cEdicion').value)||1;
+  const name=document.getElementById('cNombre').value.trim();
+  const condition=document.getElementById('cCondicion').value;
+  const img=document.getElementById('cImg').value.trim();
+  if(!code||!name||!print){toast('Código, nombre y print son requeridos','var(--sp)');return;}
+  const card={code,print,edition,name,condition,img};
+  if(editingCard>=0){series[currentSerie].cards[editingCard]=card;}
+  else{if(!series[currentSerie].cards)series[currentSerie].cards=[];series[currentSerie].cards.push(card);}
+  save();closeModal('cardModal');renderCards();renderHero();
+  toast(editingCard>=0?'Carta actualizada':'Carta agregada');
+}
+
+// ===== DELETE =====
+function deleteCard(idx){
+  confirm2(`¿Eliminar "${series[currentSerie].cards[idx].name}"?`,()=>{
+    series[currentSerie].cards.splice(idx,1);
+    save();renderCards();renderHero();toast('Carta eliminada','var(--sp)');
+  });
+}
+function deleteCardFromDetail(){closeModal('detailModal');deleteCard(detailCardIdx);}
+
+// ===== DETAIL =====
+let detailCardIdx=-1;
+function openDetail(idx){
+  detailCardIdx=idx;
+  const c=series[currentSerie].cards[idx];
+  const pt=getPrintType(c.print);
+  const colors={sp:'var(--sp)',lp:'var(--lp)',mp:'var(--mp)',hp:'var(--hp)'};
+  document.getElementById('detailTitle').textContent=`${c.name} — ed.${c.edition}`;
+  document.getElementById('detailImg').src=c.img||'';
+  document.getElementById('detailRows').innerHTML=`
+    <div class="detail-row"><span class="detail-label">Código</span><span style="font-family:monospace;font-size:12px;">${c.code}</span></div>
+    <div class="detail-row"><span class="detail-label">Print</span><span><b style="color:${colors[pt]};">${pt.toUpperCase()}</b> <span style="color:var(--text3);font-size:11px;">#${c.print}</span></span></div>
+    <div class="detail-row"><span class="detail-label">Edición</span><span>◈${c.edition}</span></div>
+    <div class="detail-row"><span class="detail-label">Condición</span><span class="cbadge ${c.condition}">${COND_STARS[c.condition]} ${COND_LABEL[c.condition]}</span></div>
+    <div class="detail-row"><span class="detail-label">Serie</span><span style="font-size:11px;color:var(--text2);">${series[currentSerie].name}</span></div>`;
+  document.getElementById('detailCopyBtn').onclick=()=>copyCode(c.code,document.getElementById('detailCopyBtn'));
+  openModal('detailModal');
+}
+function editCardFromDetail(){closeModal('detailModal');openEditCard(detailCardIdx);}
+
+// ===== IMPORT =====
+function openImport(){document.getElementById('importText').value='';document.getElementById('importPreview').innerHTML='';importParsed=[];openModal('importModal');}
+function parseImportText(raw){
+  const lines=raw.split('\n').map(l=>l.trim()).filter(l=>l);
+  const results=[];
+  for(const line of lines){
+    const clean=line.replace(/^[^\w`]+/,'').trim();
+    const parts=clean.split('·').map(p=>p.trim());
+    if(parts.length<6)continue;
+    const code=parts[0].replace(/[*`]/g,'').trim();
+    const stars=(parts[1].match(/★/g)||[]).length;
+    const condMap={0:'damaged',1:'poor',2:'good',3:'excellent',4:'mint'};
+    const condition=condMap[stars]||'good';
+    const printMatch=parts[2].match(/\d+/);
+    const print=printMatch?parseInt(printMatch[0]):1;
+    const edMatch=parts[3].match(/\d+/);
+    const edition=edMatch?parseInt(edMatch[0]):1;
+    const serie=parts[4].trim();
+    const name=parts[5].replace(/\*\*/g,'').trim();
+    if(!code||!name||!serie)continue;
+    results.push({code,print,edition,condition,serie,name,img:''});
+  }
+  return results;
+}
+function parseImport(){
+  const raw=document.getElementById('importText').value;
+  importParsed=parseImportText(raw);
+  const prev=document.getElementById('importPreview');
+  if(!importParsed.length){prev.innerHTML='<div class="empty">No se pudo parsear ninguna carta.</div>';return;}
+  const bySerie={};
+  importParsed.forEach(c=>{if(!bySerie[c.serie])bySerie[c.serie]=[];bySerie[c.serie].push(c);});
+  let html='';
+  for(const [s,cards] of Object.entries(bySerie)){
+    html+=`<div style="font-size:11px;font-weight:600;color:var(--accent);margin:6px 0 3px;">${s} (${cards.length})</div>`;
+    html+=cards.map(c=>{
+      const pt=getPrintType(c.print);
+      return`<div style="display:flex;align-items:center;gap:6px;font-size:11px;padding:2px 0;border-bottom:1px solid var(--border);">
+        <span style="font-family:monospace;color:var(--text3);">${c.code}</span>
+        <span class="pbadge ${pt}">${pt.toUpperCase()}</span>
+        <span>#${c.print}</span><span>◈${c.edition}</span>
+        <span class="cbadge ${c.condition}">${COND_LABEL[c.condition]}</span>
+        <span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${c.name}</span>
+      </div>`;
+    }).join('');
+  }
+  html+=`<div style="font-size:11px;color:var(--text2);margin-top:6px;text-align:right;">${importParsed.length} carta${importParsed.length!==1?'s':''} detectadas</div>`;
+  prev.innerHTML=html;
+}
+function confirmImport(){
+  if(!importParsed.length){toast('Primero haz clic en "Vista previa"','var(--lp)');return;}
+  const bySerie={};
+  importParsed.forEach(c=>{if(!bySerie[c.serie])bySerie[c.serie]=[];bySerie[c.serie].push(c);});
+  let totalNew=0,totalAdded=0;
+  for(const [serieName,cards] of Object.entries(bySerie)){
+    let sIdx=series.findIndex(s=>s.name.toLowerCase()===serieName.toLowerCase());
+    if(sIdx<0){series.push({name:serieName,img:'',cards:[]});sIdx=series.length-1;totalNew++;}
+    if(!series[sIdx].cards)series[sIdx].cards=[];
+    cards.forEach(c=>{
+      const dup=series[sIdx].cards.findIndex(x=>x.code===c.code);
+      if(dup>=0){series[sIdx].cards[dup]={...c};}
+      else{series[sIdx].cards.push({code:c.code,print:c.print,edition:c.edition,name:c.name,condition:c.condition,img:c.img});totalAdded++;}
+    });
+  }
+  save();closeModal('importModal');renderHero();renderSeries();
+  if(currentSerie>=0&&document.getElementById('pageSerie').classList.contains('active'))renderCards();
+  toast(`✅ ${totalAdded} cartas importadas${totalNew?`, ${totalNew} series nuevas`:''}`);
+}
+
+// ===== GLOBAL SEARCH =====
+function openGlobalSearch(){document.getElementById('gSearchInput').value='';document.getElementById('gSearchResults').innerHTML='<div class="empty">Escribe para buscar...</div>';openModal('searchModal');setTimeout(()=>document.getElementById('gSearchInput').focus(),60);}
+function doGlobalSearch(){
+  const q=document.getElementById('gSearchInput').value.toLowerCase().trim();
+  const cont=document.getElementById('gSearchResults');
+  if(q.length<2){cont.innerHTML='<div class="empty">Mínimo 2 caracteres...</div>';return;}
+  const results=[];
+  series.forEach((s,si)=>{
+    (s.cards||[]).forEach((c,ci)=>{
+      if(c.name.toLowerCase().includes(q)||s.name.toLowerCase().includes(q)||c.code.toLowerCase().includes(q))
+        results.push({...c,_si:si,_ci:ci,serieName:s.name});
+    });
+  });
+  if(!results.length){cont.innerHTML='<div class="empty">Sin resultados.</div>';return;}
+  cont.innerHTML=results.slice(0,50).map(c=>{
+    const pt=getPrintType(c.print);
+    return`<div class="gsr-item" onclick="closeModal('searchModal');openSerie(${c._si})">
+      <img class="gsr-img" src="${c.img||''}" onerror="this.style.opacity='0.2'" alt="">
+      <div style="flex:1;min-width:0;">
+        <div class="gsr-name">${c.name} <span style="font-weight:400;color:var(--text3);">ed.${c.edition}</span></div>
+        <div class="gsr-meta"><span class="pbadge ${pt}">${pt.toUpperCase()}</span> <span class="cbadge ${c.condition}">${COND_LABEL[c.condition]}</span> · ${c.serieName}</div>
+      </div>
+      <button class="btn btn-sm" onclick="event.stopPropagation();copyCode('${c.code}',this)">📋</button>
+    </div>`;
+  }).join('');
+}
+
+// ===== IMAGE DROP =====
+function compressImage(dataUrl,maxDim=650,quality=0.82){
+  return new Promise((resolve)=>{
+    const img=new Image();
+    img.onload=()=>{
+      let w=img.width,h=img.height;
+      if(w>maxDim||h>maxDim){
+        if(w>=h){h=Math.round(h*(maxDim/w));w=maxDim;}
+        else{w=Math.round(w*(maxDim/h));h=maxDim;}
+      }
+      const canvas=document.createElement('canvas');
+      canvas.width=w;canvas.height=h;
+      const ctx=canvas.getContext('2d');
+      ctx.drawImage(img,0,0,w,h);
+      try{resolve(canvas.toDataURL('image/jpeg',quality));}
+      catch(e){resolve(dataUrl);} // canvas "tainted" (cross-origin) — keep original
+    };
+    img.onerror=()=>resolve(dataUrl);
+    img.src=dataUrl;
+  });
+}
+function setupImgDrop(dropId,fileId,inputId,previewId,txtId){
+  const drop=document.getElementById(dropId);
+  const fileInput=document.getElementById(fileId);
+  const urlInput=document.getElementById(inputId);
+  const preview=document.getElementById(previewId);
+  const txt=document.getElementById(txtId);
+
+  async function setImage(src){
+    if(src.startsWith('data:image')){
+      txt.textContent='⏳ Optimizando imagen...';
+      src=await compressImage(src);
+    }
+    urlInput.value=src;
+    preview.src=src;
+    preview.classList.add('show');
+    txt.textContent='✅ Imagen cargada — arrastra otra o pega una URL abajo para cambiarla';
+  }
+  function readFile(file){
+    if(!file||!file.type.startsWith('image/')){toast('Eso no es una imagen','var(--sp)');return;}
+    const reader=new FileReader();
+    reader.onload=e=>setImage(e.target.result);
+    reader.readAsDataURL(file);
+  }
+  drop.addEventListener('dragover',e=>{e.preventDefault();drop.classList.add('dragover');});
+  drop.addEventListener('dragleave',e=>{if(!drop.contains(e.relatedTarget))drop.classList.remove('dragover');});
+  async function setFromUrl(url){
+    txt.textContent='⏳ Descargando imagen...';
+    try{
+      const res=await fetch(url,{mode:'cors'});
+      if(!res.ok)throw new Error('bad status');
+      const blob=await res.blob();
+      if(!blob.type.startsWith('image/'))throw new Error('not image');
+      const reader=new FileReader();
+      reader.onload=e=>setImage(e.target.result);
+      reader.onerror=()=>{throw new Error('read failed');};
+      reader.readAsDataURL(blob);
+    }catch(err){
+      // Could not download the bytes (CORS or link already dead) — fall back to the raw URL
+      // and warn, since links like Discord's CDN expire and this may stop working later.
+      setImage(url);
+      toast('⚠️ No se pudo descargar la imagen; se guardó el link (puede vencerse, ej. Discord)','var(--lp)');
+    }
+  }
+  drop.addEventListener('drop',e=>{
+    e.preventDefault();drop.classList.remove('dragover');
+    if(e.dataTransfer.files&&e.dataTransfer.files.length){
+      readFile(e.dataTransfer.files[0]);
+      return;
+    }
+    // Dragging an image from another tab/page usually gives a URL, not a file
+    const uri=e.dataTransfer.getData('text/uri-list')||e.dataTransfer.getData('text/plain');
+    if(uri&&/^https?:\/\//i.test(uri.trim())){setFromUrl(uri.trim());}
+    else{
+      const html=e.dataTransfer.getData('text/html');
+      const m=html&&html.match(/<img[^>]+src=["']([^"']+)["']/i);
+      if(m)setFromUrl(m[1]);else toast('No se pudo leer la imagen arrastrada','var(--sp)');
+    }
+  });
+  fileInput.addEventListener('change',e=>{if(e.target.files[0])readFile(e.target.files[0]);e.target.value='';});
+  urlInput.addEventListener('input',()=>{
+    if(urlInput.value.trim()){preview.src=urlInput.value.trim();preview.classList.add('show');}
+    else{preview.classList.remove('show');txt.textContent='📎 Arrastra una imagen aquí o haz clic para elegirla';}
+  });
+}
+function resetImgDrop(previewId,txtId,url){
+  const preview=document.getElementById(previewId);
+  const txt=document.getElementById(txtId);
+  if(url){preview.src=url;preview.classList.add('show');txt.textContent='✅ Imagen cargada — arrastra otra o pega una URL abajo para cambiarla';}
+  else{preview.src='';preview.classList.remove('show');txt.textContent='📎 Arrastra una imagen aquí o haz clic para elegirla';}
+}
+setupImgDrop('cImgDrop','cImgFile','cImg','cImgPreview','cImgDropTxt');
+setupImgDrop('sImgDrop','sImgFile','sImg','sImgPreview','sImgDropTxt');
+
+// ===== UTILS =====
+function openModal(id){document.getElementById(id).classList.add('open');}
+function closeModal(id){document.getElementById(id).classList.remove('open');}
+function copyCode(code,btn){
+  const text=`kv ${code}`;
+  try{
+    navigator.clipboard.writeText(text).then(()=>{flash(btn);}).catch(()=>fallbackCopy(text,btn));
+  }catch(e){fallbackCopy(text,btn);}
+}
+function fallbackCopy(text,btn){
+  const ta=document.createElement('textarea');
+  ta.value=text;
+  ta.style.cssText='position:fixed;top:-999px;left:-999px;opacity:0;';
+  document.body.appendChild(ta);
+  ta.focus();ta.select();
+  try{document.execCommand('copy');flash(btn);}catch(e){toast('No se pudo copiar','var(--sp)');}
+  document.body.removeChild(ta);
+}
+function flash(btn){
+  const orig=btn.textContent;btn.textContent='✅';
+  setTimeout(()=>btn.textContent=orig,1200);
+}
+function toast(msg,color='var(--mp)'){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.style.borderColor=color;
+  t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2200);
+}
+function confirm2(msg,cb){
+  const ov=document.createElement('div');
+  ov.className='confirm-overlay';
+  ov.innerHTML=`<div class="confirm-box"><p>${msg}</p><div class="cbr"><button class="btn">Cancelar</button><button class="btn btn-danger">Eliminar</button></div></div>`;
+  ov.querySelector('.btn:last-child').onclick=()=>{ov.remove();cb();};
+  ov.querySelector('.btn:first-child').onclick=()=>ov.remove();
+  document.body.appendChild(ov);
+}
+function exportData(){
+  if(!series.length){toast('Nada que exportar','var(--sp)');return;}
+  const blob=new Blob([JSON.stringify(series)],{type:'application/json'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url;a.download='karuta_backup.json';
+  document.body.appendChild(a);a.click();a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url),1000);
+  toast('Colección exportada');
+}
+function importFile(event){
+  const file=event.target.files[0];if(!file)return;
+  const reader=new FileReader();
+  reader.onload=function(e){
+    try{
+      let text=e.target.result.replace(/^\uFEFF/,'').trim();
+      const imported=JSON.parse(text);
+      if(Array.isArray(imported)){series=imported;save();renderHero();renderSeries();if(document.getElementById('pageSerie').classList.contains('active'))renderCards();toast('✅ Colección cargada correctamente');}
+      else throw new Error('No array');
+    }catch(err){toast('Error: archivo JSON inválido','var(--sp)');}
+  };
+  reader.readAsText(file,'UTF-8');event.target.value='';
+}
+function clearAll(){confirm2('¿Borrar TODA la colección Karuta?',()=>{series=[];save();renderHero();renderSeries();toast('Colección borrada','var(--sp)');});}
+
+document.addEventListener('keydown',e=>{
+  if(e.key==='Escape'){
+    document.querySelectorAll('.modal.open').forEach(m=>m.classList.remove('open'));
+    document.querySelectorAll('.confirm-overlay').forEach(d=>d.remove());
+  }
+});
+document.querySelectorAll('.modal').forEach(m=>{m.addEventListener('click',e=>{if(e.target===m)m.classList.remove('open');});});
+init().catch(err=>{console.error(err);toast('Error cargando la colección','var(--sp)');});
+</script>
+</body>
+</html>
